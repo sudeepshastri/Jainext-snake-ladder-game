@@ -260,6 +260,51 @@
         }
         @keyframes roll { from { transform: rotate(0deg) scale(1.1); } to { transform: rotate(360deg) scale(1.1); } }
 
+        /* [NEW] Guideline Popup Styles */
+        .guideline-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            padding-top: 80px; /* Make space for the close button */
+            max-width: 90vw;
+            width: 1000px;
+            height: 90vh;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .question-popup.active .guideline-card {
+             transform: scale(1);
+        }
+
+        .guideline-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            background: var(--ladder-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        .guideline-close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        #guidelineFrame {
+            flex-grow: 1; /* Make iframe fill the remaining space */
+            border-radius: 10px;
+        }
+
         @media (max-width: 1200px) {
             .board-logo-container { display: none; }
         }
@@ -397,6 +442,14 @@
             <div class="dice-popup-content" id="dicePopupContent">🎲</div>
         </div>
         
+        <!-- [NEW] Guideline Popup -->
+        <div class="question-popup" id="guidelinePopup">
+            <div class="guideline-card">
+                 <button class="guideline-close-btn" onclick="closeGuidelinesAndStart()">Start Game →</button>
+                 <iframe id="guidelineFrame" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+        
         <div class="sound-effects" style="display: none;">
             <audio id="timerTickSound" src=""></audio>
             <audio id="diceRollSound" src=""></audio>
@@ -414,7 +467,6 @@
         const SNAKES = { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 63, 95: 55, 99: 18 };
         const LADDERS = { 1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 96 };
         
-        // [MODIFIED] Default asset paths
         const DEFAULT_ASSETS = {
             logo: 'assets/logo.png',
             questions: 'assets/questions.csv',
@@ -443,7 +495,6 @@
             { question: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "Jane Austen", "William Shakespeare", "Mark Twain"], answer: 2, level: "hard" }
         ];
 
-        // [MODIFIED] Initialize game state with new properties
         function initializeGameState() {
              gameState = {
                 players: [],
@@ -453,8 +504,8 @@
                 availableQuestions: [],
                 usedQuestions: [],
                 csvUploaded: false,
-                logoUploaded: false,     // New: Tracks if user uploaded a logo
-                soundsUploaded: {},    // New: Tracks individual user-uploaded sounds
+                logoUploaded: false,
+                soundsUploaded: {},
                 timerDuration: 15,
                 winners: [],
                 soundEnabled: true,
@@ -692,7 +743,6 @@
             });
         }
         
-        // [MODIFIED] Set logoUploaded flag on user upload
         function handleLogoUpload(event) {
             const file = event.target.files[0];
             const label = document.getElementById('logoLabel');
@@ -707,7 +757,7 @@
                     const boardImg = document.getElementById('boardLogoImg');
                     boardImg.src = imgSrc;
                     boardImg.style.display = 'block';
-                    gameState.logoUploaded = true; // Set flag here
+                    gameState.logoUploaded = true;
                     label.textContent = `✅ ${file.name} loaded!`;
                     label.style.background = '#d4edda';
                 };
@@ -762,7 +812,6 @@
             }
         }
 
-        // [MODIFIED] Set soundsUploaded flag on user upload
         function handleSoundUpload(event, audioId) {
             const file = event.target.files[0];
             const audioEl = document.getElementById(audioId);
@@ -771,7 +820,7 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     audioEl.src = e.target.result;
-                    gameState.soundsUploaded[audioId] = true; // Set flag for this specific sound
+                    gameState.soundsUploaded[audioId] = true;
                     labelEl.textContent = '✅ Loaded';
                     labelEl.style.backgroundColor = '#d4edda';
                 }
@@ -779,9 +828,7 @@
             }
         }
         
-        // [NEW] Function to load default assets if not provided by user
         async function loadDefaultAssets() {
-            // Load Logo
             if (!gameState.logoUploaded) {
                 const imgSrc = DEFAULT_ASSETS.logo;
                 const headerImg = document.getElementById('gameLogoImg');
@@ -794,13 +841,12 @@
                 document.getElementById('logoLabel').textContent = `✅ Default logo loaded!`;
             }
 
-            // Load Questions CSV
             if (!gameState.csvUploaded) {
                 try {
                     const response = await fetch(DEFAULT_ASSETS.questions);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const csvText = await response.text();
-                    parseCSV(csvText); // This sets the flag and master questions
+                    parseCSV(csvText);
                     document.getElementById('csvLabel').innerHTML = `✅ Default questions loaded!`;
                 } catch (error) {
                     console.error('Could not load default questions.csv:', error);
@@ -808,7 +854,6 @@
                 }
             }
 
-            // Load Sounds
             for (const soundId in DEFAULT_ASSETS.sounds) {
                 if (!gameState.soundsUploaded[soundId]) {
                     const audioEl = document.getElementById(soundId);
@@ -822,12 +867,10 @@
             }
         }
 
-        // [MODIFIED] Revamped startGame to be async and use the asset loader
-        async function startGame() {
-            // 1. Load any necessary default assets if user hasn't provided them.
+        // [MODIFIED] Renamed from startGame to run the core game setup logic.
+        async function initializeAndRunGame() {
             await loadDefaultAssets();
             
-            // 2. Preserve essential setup state before re-initializing the game logic state.
             const masterQuestions = gameState.masterQuestions;
             const currentSetup = {
                 csvUploaded: gameState.csvUploaded,
@@ -835,17 +878,14 @@
                 soundsUploaded: gameState.soundsUploaded
             };
 
-            // 3. Initialize game state for a new match (clears players, positions, etc.).
             initializeGameState();
             
-            // 4. Restore the setup state and loaded questions.
             gameState.masterQuestions = masterQuestions;
             gameState.availableQuestions = [...masterQuestions];
             gameState.csvUploaded = currentSetup.csvUploaded;
             gameState.logoUploaded = currentSetup.logoUploaded;
             gameState.soundsUploaded = currentSetup.soundsUploaded;
 
-            // 5. Setup players and game parameters from UI inputs.
             const numPlayers = parseInt(document.getElementById('numPlayers').value);
             gameState.players = Array.from({ length: numPlayers }, (_, i) => ({
                 name: document.getElementById(`player${i + 1}Name`).value || `Player ${i + 1}`,
@@ -856,17 +896,35 @@
             gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
             gameState.gameStarted = true;
             
-            // 6. Transition UI to game view.
             document.getElementById('setupSection').classList.remove('active');
             document.getElementById('gameSection').classList.add('active');
             
-            // 7. Initialize history for the new game.
             history = [];
             historyIndex = -1;
             saveStateToHistory(); 
 
-            // 8. Update all UI elements to reflect the new game state.
             updateAllUI();
+        }
+        
+        // [NEW] This function is now called by the "Start Game" button. It opens the guideline popup.
+        function startGame() {
+            const popup = document.getElementById('guidelinePopup');
+            const frame = document.getElementById('guidelineFrame');
+            
+            // Set the source for the PDF viewer, assuming it's in an 'assets' folder
+            frame.src = 'assets/guideline.pdf'; 
+            
+            // Show the popup
+            popup.classList.add('active');
+        }
+
+        // [NEW] This function is called by the button inside the guideline popup.
+        async function closeGuidelinesAndStart() {
+            const popup = document.getElementById('guidelinePopup');
+            popup.classList.remove('active');
+            
+            // Now, proceed to the actual game setup.
+            await initializeAndRunGame();
         }
         
         function updatePlayersDisplay() {

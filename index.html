@@ -51,12 +51,12 @@
         .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
         .title-text { color: white; font-size: 2.2em; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         
-        .controls { display: flex; gap: 20px; align-items: center; }
+        .controls { display: flex; gap: 10px; align-items: center; }
         .volume-control { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 25px; }
         .volume-slider { width: 80px; }
         
-        .fullscreen-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1em; transition: all 0.3s ease; }
-        .fullscreen-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .header-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1em; transition: all 0.3s ease; }
+        .header-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
         
         .main-container { flex: 1; display: flex; padding: 20px; gap: 20px; overflow: hidden; }
         .game-board-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
@@ -129,7 +129,7 @@
         .sound-upload-label { padding: 5px 10px; background: #ecf0f1; border: 1px solid #bdc3c7; border-radius: 5px; cursor: pointer; text-align: center; flex-basis: 55%; font-size: 0.9em; }
         .sound-upload-label:hover { background: #e0e0e0; }
 
-        .btn { padding: 12px 25px; border: none; border-radius: 25px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
+        .btn { padding: 12px 25px; border: none; border-radius: 25px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; text-align: center;}
         .btn:disabled { background: var(--button-disabled-bg); box-shadow: none !important; transform: none !important; cursor: not-allowed; opacity: 0.6; }
         
         .btn-primary { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
@@ -149,31 +149,19 @@
         .player-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #bdc3c7; }
         .player-item:last-child { border-bottom: none; }
         
-        .question-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0s 0.3s;
-            pointer-events: none;
+        .question-popup, .guide-popup, .guidelines-prompt-popup {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s 0.3s; pointer-events: none;
         }
-        .question-popup.active {
-            opacity: 1;
-            visibility: visible;
-            transition: opacity 0.3s ease;
-            pointer-events: all;
+        .question-popup.active, .guide-popup.active, .guidelines-prompt-popup.active {
+            opacity: 1; visibility: visible; transition: opacity 0.3s ease; pointer-events: all;
         }
         
-        .question-card { background: white; border-radius: 20px; padding: 60px; max-width: 850px; width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.3); transform: scale(0.8); transition: transform 0.3s ease; }
-        .question-popup.active .question-card { transform: scale(1); }
+        .question-card, .guide-content, .guidelines-prompt-content { background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); transform: scale(0.8); transition: transform 0.3s ease; }
+        .question-popup.active .question-card, .guide-popup.active .guide-content, .guidelines-prompt-popup.active .guidelines-prompt-content { transform: scale(1); }
+        
+        .question-card { padding: 60px; max-width: 850px; width: 90vw; }
         .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .timer { background: #e74c3c; color: white; padding: 10px 15px; border-radius: 25px; font-weight: bold; font-size: 1.2em; }
         .timer.warning { background: #f39c12; animation: blink 1s infinite; }
@@ -185,26 +173,15 @@
         .option.selected { background: #3498db; color: white; border-color: #2980b9; }
         .option.correct { background: var(--ladder-color); color: white; border-color: #229954; }
         .option.wrong { background: #e74c3c; color: white; border-color: #c0392b; }
+        
         .winners-section { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: 20px; border-radius: 15px; text-align: center; }
         .winner-item { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.3); font-size: 1.1em; }
         .winner-item:last-child { border-bottom: none; }
         
         .svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-        
-        .snake-outline, .snake-body {
-            stroke-linecap: round;
-            fill: none;
-            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
-        }
-        .snake-outline {
-            stroke: #2c3e50; /* Dark outline color */
-            stroke-width: 10px; /* Thicker for the outline */
-        }
-        .snake-body {
-            stroke: var(--snake-color); /* Green body color */
-            stroke-width: 6px; /* Thinner for the inner body */
-        }
-
+        .snake-outline, .snake-body { stroke-linecap: round; fill: none; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3)); }
+        .snake-outline { stroke: #2c3e50; stroke-width: 10px; }
+        .snake-body { stroke: var(--snake-color); stroke-width: 6px; }
         .ladder-side { stroke: #8B4513; stroke-width: 8px; stroke-linecap: round; opacity: 0.9; }
         .ladder-rung { stroke: #AF601A; stroke-width: 6px; stroke-linecap: round; opacity: 0.9; }
         
@@ -214,51 +191,61 @@
         .history-controls .btn { padding: 10px 15px; flex-grow: 1; }
 
         .dice-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0s 0.3s;
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center; z-index: 2000;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s 0.3s; pointer-events: none;
         }
-        .dice-popup.active {
-            opacity: 1;
-            visibility: visible;
-            transition: opacity 0.3s ease;
-            pointer-events: all;
-        }
+        .dice-popup.active { opacity: 1; visibility: visible; transition: opacity 0.3s ease; pointer-events: all; }
         .dice-popup-content {
-            width: 550px;
-            height: 550px;
-            background: white;
-            border: 5px solid #2c3e50;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 25em;
-            font-weight: bold;
-            color: #2c3e50;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transform: scale(0.8);
-            transition: transform 0.3s ease;
+            width: 550px; height: 550px; background: white; border: 5px solid #2c3e50; border-radius: 50px;
+            display: flex; align-items: center; justify-content: center; font-size: 25em; font-weight: bold; color: #2c3e50;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(0.8); transition: transform 0.3s ease;
         }
-        .dice-popup.active .dice-popup-content {
-            transform: scale(1);
-        }
-        .dice-popup-content.rolling {
-            animation: roll 0.5s infinite linear;
-        }
+        .dice-popup.active .dice-popup-content { transform: scale(1); }
+        .dice-popup-content.rolling { animation: roll 0.5s infinite linear; }
         @keyframes roll { from { transform: rotate(0deg) scale(1.1); } to { transform: rotate(360deg) scale(1.1); } }
+        
+        .guide-popup { z-index: 999; }
+        .guide-content {
+            position: relative; padding: 30px 40px; width: 90vw; max-width: 800px;
+            max-height: 85vh; overflow-y: auto; color: #333; line-height: 1.6;
+        }
+        .guide-close-btn {
+            position: absolute; top: 15px; right: 20px; font-size: 2.5em; color: #aaa;
+            cursor: pointer; line-height: 1; transition: color 0.2s ease;
+        }
+        .guide-close-btn:hover { color: #333; }
+        .guide-content h2 { font-size: 1.8em; color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        .guide-content h3 { font-size: 1.3em; color: #2980b9; margin-top: 25px; margin-bottom: 10px; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }
+        .guide-content p, .guide-content li { font-size: 1em; }
+        .guide-content ul { padding-left: 20px; }
+        .guide-content strong { color: #2c3e50; }
+        .guide-content table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .guide-content th, .guide-content td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .guide-content th { background-color: #f2f2f2; font-weight: 600; }
+        .guide-content code { background: #ecf0f1; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        
+        /* [NEW] Styles for the pre-game guidelines prompt */
+        .guidelines-prompt-content {
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+        }
+        .guidelines-prompt-content h2 {
+            font-size: 1.6em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .guidelines-prompt-content p {
+            margin-bottom: 30px;
+            color: #34495e;
+            font-size: 1.1em;
+        }
+        .guidelines-prompt-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
         @media (max-width: 1200px) {
             .board-logo-container { display: none; }
@@ -267,8 +254,10 @@
             .main-container { flex-direction: column; padding: 10px; }
             .side-panel { width: 100%; height: auto; max-height: 45vh; order: 1; }
             .game-board-container { order: 2; }
-            .header { order: 0; padding: 10px 15px; }
+            .header { order: 0; padding: 10px 15px; flex-wrap: wrap; }
             .title-text { font-size: 1.5em; }
+            .controls { gap: 5px; flex-basis: 100%; justify-content: center; padding-top: 5px; }
+            .header-btn { padding: 8px 12px; font-size: 0.9em; }
         }
     </style>
 </head>
@@ -287,11 +276,13 @@
                     <span id="volumeIcon">🔊</span>
                     <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
                 </div>
-                <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                <button class="header-btn" onclick="toggleGuide()">❓ How to Play</button>
+                <button class="header-btn" id="fullscreenBtn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
             </div>
         </div>
         
         <div class="main-container">
+            <!-- Game Board etc. remains the same -->
             <div class="game-board-container">
                  <div class="board-logo-container">
                     <img id="boardLogoImg" class="board-logo-img" alt="Board Logo">
@@ -384,6 +375,7 @@
             </div>
         </div>
 
+        <!-- All popups grouped together -->
         <div class="question-popup" id="questionPopup">
             <div class="question-card">
                 <div class="question-header"><h3>❓ Question</h3><div class="timer" id="questionTimer">15</div></div>
@@ -397,6 +389,46 @@
             <div class="dice-popup-content" id="dicePopupContent">🎲</div>
         </div>
         
+        <div class="guide-popup" id="guidePopup">
+            <div class="guide-content">
+                <span class="guide-close-btn" onclick="toggleGuide()">×</span>
+                <h2>Jainext Snake & Ladder - How to Play</h2>
+                <h3>⚙️ 2. How to Play (Game Setup Panel)</h3>
+                <p>When you open the game, you'll see the setup panel on the right. Configure your game here before starting.</p>
+                <ul><li><strong>🏷️ Game Name:</strong> Enter a title for your game session...</li><li><strong>👥 Number of Players:</strong> Select how many people (from 2 to 6) are playing...</li></ul>
+                <h3>🎮 3. Gameplay Controls & Flow</h3>
+                <p>After starting the game, the side panel changes to the game status view.</p>
+                <ul><li><strong>Current Player Display:</strong> A colored banner at the top shows whose turn it is...</li></ul>
+                <h3>✨ 4. Special Host Features</h3>
+                <ul><li><strong>↶ Undo / Redo ↷:</strong> Made a mistake? You can go back one step...</li></ul>
+                <h3>⌨️ 5. Shortcut Keys for the Host</h3>
+                <p>Use these keyboard shortcuts to manage the game more quickly.</p>
+                <table>
+                    <thead><tr><th>Key(s)</th><th>Action</th><th>Context</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>PageDown</code></td><td><strong>Roll the Dice</strong></td><td>During gameplay</td></tr>
+                        <tr><td><code>Alt</code> + <code>D</code></td><td><strong>Roll the Dice</strong></td><td>During gameplay</td></tr>
+                        <tr><td><code>Alt</code> + <code>S</code></td><td><strong>Submit Answer</strong></td><td>Question pop-up is visible</td></tr>
+                        <tr><td><code>Alt</code> + <code>1</code>/<code>2</code>/<code>3</code>/<code>4</code></td><td>Select & Submit Option</td><td>Question pop-up is visible</td></tr>
+                        <tr><td><code>Ctrl</code> + <code>Z</code></td><td><strong>Undo</strong> Last Action</td><td>Any point during the game</td></tr>
+                        <tr><td><code>Ctrl</code> + <code>Y</code></td><td><strong>Redo</strong> Last Action</td><td>Any point during the game</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- [NEW] Pre-Game Guidelines Prompt Popup -->
+        <div class="guidelines-prompt-popup" id="guidelinesPromptPopup">
+            <div class="guidelines-prompt-content">
+                <h2>Ready to Play?</h2>
+                <p>You can review the game guidelines before starting. They will open in a new tab.</p>
+                <div class="guidelines-prompt-buttons">
+                    <a href="assets/Game Guidelines.pdf" target="_blank" class="btn btn-secondary">📄 View Game Guidelines</a>
+                    <button class="btn btn-primary" onclick="proceedToGame()">▶️ Continue to Game</button>
+                </div>
+            </div>
+        </div>
+
         <div class="sound-effects" style="display: none;">
             <audio id="timerTickSound" src=""></audio>
             <audio id="diceRollSound" src=""></audio>
@@ -409,28 +441,26 @@
         </div>
     </div>
 <script>
-        // Game Configuration
+        // Game Configuration and State variables... (no changes here)
         const BOARD_SIZE = 100;
-        const SNAKES = { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 63, 95: 55, 99: 18 };
+        const SNAKES = { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78 };
         const LADDERS = { 1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 96 };
         
-        // [MODIFIED] Default asset paths
         const DEFAULT_ASSETS = {
             logo: 'assets/logo.png',
             questions: 'assets/questions.csv',
             sounds: {
-                timerTickSound: 'assets/Timer_Tick.mp3',
-                diceRollSound: 'assets/Dice_Roll.mp3',
-                correctSound: 'assets/Correct_Answer.mp3',
-                wrongSound: 'assets/Wrong_Answer.mp3',
-                moveSound: 'assets/Player_Move.mp3',
-                snakeSound: 'assets/Snake.mp3',
-                ladderSound: 'assets/Ladder.mp3',
-                winSound: 'assets/Wrong_Answer.mp3'
+                timerTickSound: 'assets/timer_tick.mp3',
+                diceRollSound: 'assets/dice_roll.mp3',
+                correctSound: 'assets/correct.mp3',
+                wrongSound: 'assets/wrong.mp3',
+                moveSound: 'assets/move.mp3',
+                snakeSound: 'assets/snake.mp3',
+                ladderSound: 'assets/ladder.mp3',
+                winSound: 'assets/win.mp3'
             }
         };
 
-        // Game State
         let gameState = {};
         let history = [];
         let historyIndex = -1;
@@ -440,29 +470,13 @@
         const DEFAULT_QUESTIONS = [
             { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: 2, level: "easy" },
             { question: "What is 8 x 7?", options: ["54", "56", "64", "68"], answer: 1, level: "medium" },
-            { question: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "Jane Austen", "William Shakespeare", "Mark Twain"], answer: 2, level: "hard" }
         ];
 
-        // [MODIFIED] Initialize game state with new properties
         function initializeGameState() {
              gameState = {
-                players: [],
-                currentPlayerIndex: 0,
-                gameStarted: false,
-                masterQuestions: [],
-                availableQuestions: [],
-                usedQuestions: [],
-                csvUploaded: false,
-                logoUploaded: false,     // New: Tracks if user uploaded a logo
-                soundsUploaded: {},    // New: Tracks individual user-uploaded sounds
-                timerDuration: 15,
-                winners: [],
-                soundEnabled: true,
-                volume: 0.5,
-                currentQuestion: null,
-                selectedOption: -1,
-                questionTimer: null,
-                isSubmitting: false
+                players: [], currentPlayerIndex: 0, gameStarted: false, masterQuestions: [], availableQuestions: [], usedQuestions: [],
+                csvUploaded: false, logoUploaded: false, soundsUploaded: {}, timerDuration: 15, winners: [], soundEnabled: true,
+                volume: 0.5, currentQuestion: null, selectedOption: -1, questionTimer: null, isSubmitting: false
             };
         }
 
@@ -484,71 +498,94 @@
             });
         });
 
+        function toggleGuide() {
+            document.getElementById('guidePopup').classList.toggle('active');
+        }
+
+        // [MODIFIED] The startGame function now prepares the game and shows the prompt.
+        async function startGame() {
+            await loadDefaultAssets();
+            
+            const masterQuestions = gameState.masterQuestions;
+            const currentSetup = {
+                csvUploaded: gameState.csvUploaded,
+                logoUploaded: gameState.logoUploaded,
+                soundsUploaded: gameState.soundsUploaded
+            };
+
+            initializeGameState();
+            
+            gameState.masterQuestions = masterQuestions;
+            gameState.availableQuestions = [...masterQuestions];
+            gameState.csvUploaded = currentSetup.csvUploaded;
+            gameState.logoUploaded = currentSetup.logoUploaded;
+            gameState.soundsUploaded = currentSetup.soundsUploaded;
+
+            const numPlayers = parseInt(document.getElementById('numPlayers').value);
+            gameState.players = Array.from({ length: numPlayers }, (_, i) => ({
+                name: document.getElementById(`player${i + 1}Name`).value || `Player ${i + 1}`,
+                position: 0,
+                stuckCounter: 0, 
+                color: `player-${i + 1}`
+            }));
+            gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
+            
+            // Show the prompt instead of starting immediately
+            document.getElementById('guidelinesPromptPopup').classList.add('active');
+        }
+        
+        // [NEW] This function is called from the prompt to actually start the game UI.
+        function proceedToGame() {
+            document.getElementById('guidelinesPromptPopup').classList.remove('active');
+            
+            gameState.gameStarted = true;
+            document.getElementById('setupSection').classList.remove('active');
+            document.getElementById('gameSection').classList.add('active');
+            
+            history = [];
+            historyIndex = -1;
+            saveStateToHistory(); 
+
+            updateAllUI();
+        }
+
+        // All other Javascript functions (handleKeyboardShortcuts, deepClone, saveStateToHistory, etc.) remain the same.
+        // ... (The rest of the JS code is identical to the previous version)
+        
         function handleKeyboardShortcuts(event) {
             const activeElement = document.activeElement;
-            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT')) {
-                return;
-            }
-
+            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT')) { return; }
             if (event.key.toLowerCase() === 'pagedown') {
                 event.preventDefault();
                 document.getElementById('rollButton').click();
                 return;
             }
-
             if (event.ctrlKey) {
-                if (event.key.toLowerCase() === 'z') {
-                    event.preventDefault();
-                    document.getElementById('undoButton').click();
-                }
-                if (event.key.toLowerCase() === 'y') {
-                    event.preventDefault();
-                    document.getElementById('redoButton').click();
-                }
+                if (event.key.toLowerCase() === 'z') { event.preventDefault(); document.getElementById('undoButton').click(); }
+                if (event.key.toLowerCase() === 'y') { event.preventDefault(); document.getElementById('redoButton').click(); }
             } else if (event.altKey) {
                 event.preventDefault();
                 switch (event.key.toLowerCase()) {
-                    case 'd':
-                        document.getElementById('rollButton').click();
-                        break;
-                    case 's':
-                        if (document.getElementById('questionPopup').classList.contains('active')) {
-                            document.getElementById('submitButton').click();
-                        }
-                        break;
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
+                    case 'd': document.getElementById('rollButton').click(); break;
+                    case 's': if (document.getElementById('questionPopup').classList.contains('active')) { document.getElementById('submitButton').click(); } break;
+                    case '1': case '2': case '3': case '4':
                         if (document.getElementById('questionPopup').classList.contains('active') && !gameState.isSubmitting) {
                             const optionIndex = parseInt(event.key) - 1;
                             const options = document.querySelectorAll('#optionsContainer .option');
-                            if (options[optionIndex]) {
-                                selectOption(optionIndex, options[optionIndex]);
-                                submitAnswer();
-                            }
+                            if (options[optionIndex]) { selectOption(optionIndex, options[optionIndex]); submitAnswer(); }
                         }
                         break;
                 }
             }
         }
-
-        function deepClone(obj) {
-            return JSON.parse(JSON.stringify(obj));
-        }
-
+        function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
         function saveStateToHistory() {
-            if (historyIndex < history.length - 1) {
-                history = history.slice(0, historyIndex + 1);
-            }
+            if (historyIndex < history.length - 1) { history = history.slice(0, historyIndex + 1); }
             history.push(deepClone(gameState));
-            if (history.length > MAX_HISTORY) {
-                history.shift();
-            }
+            if (history.length > MAX_HISTORY) { history.shift(); }
             historyIndex = history.length - 1;
             updateHistoryButtons();
         }
-
         function loadStateFromHistory(index) {
             if (index >= 0 && index < history.length) {
                 gameState = deepClone(history[index]);
@@ -557,24 +594,12 @@
                 updateHistoryButtons();
             }
         }
-        
-        function undoStep() {
-            if (historyIndex > 0) {
-                loadStateFromHistory(historyIndex - 1);
-            }
-        }
-
-        function redoStep() {
-            if (historyIndex < history.length - 1) {
-                loadStateFromHistory(historyIndex + 1);
-            }
-        }
-
+        function undoStep() { if (historyIndex > 0) { loadStateFromHistory(historyIndex - 1); } }
+        function redoStep() { if (historyIndex < history.length - 1) { loadStateFromHistory(historyIndex + 1); } }
         function updateHistoryButtons() {
             document.getElementById('undoButton').disabled = historyIndex <= 0;
             document.getElementById('redoButton').disabled = historyIndex >= history.length - 1;
         }
-
         function updateAllUI() {
             const gameIsOver = isGameOver();
             document.getElementById('endGameButton').disabled = !gameState.gameStarted || gameIsOver;
@@ -582,20 +607,17 @@
             updateCurrentPlayerDisplay();
             updateGameBoard();
             setTimeout(drawSnakesAndLadders, 50);
-            
             const rollButtonsDisabled = gameIsOver || !gameState.gameStarted;
             document.getElementById('rollButton').disabled = rollButtonsDisabled;
             document.getElementById('skipTurnButton').disabled = rollButtonsDisabled;
             document.getElementById('winnersSection').style.display = gameIsOver ? 'block' : 'none';
         }
-
         function isGameOver() {
             if (!gameState.gameStarted) return false;
             const nonWinnersCount = gameState.players.length - gameState.winners.length;
             const maxWinners = Math.min(3, gameState.players.length > 1 ? gameState.players.length - 1 : 1);
             return (gameState.winners.length >= maxWinners && maxWinners > 0) || (nonWinnersCount <= 1 && gameState.players.length > 1);
         }
-        
         function createBoard() {
             const board = document.getElementById('gameBoard');
             board.innerHTML = '<svg id="svgLayer" class="svg-layer"></svg>';
@@ -605,13 +627,8 @@
                 cell.className = 'cell';
                 cell.id = `cell-${i}`;
                 cell.innerHTML = `<span class="cell-number">${i}</span>`;
-                if (SNAKES[i]) {
-                    cell.classList.add('snake-start');
-                    cell.innerHTML += `<div class="emoji">🐍</div>`;
-                } else if (LADDERS[i]) {
-                    cell.classList.add('ladder-start');
-                    cell.innerHTML += `<div class="emoji">🪜</div>`;
-                }
+                if (SNAKES[i]) { cell.classList.add('snake-start'); cell.innerHTML += `<div class="emoji">🐍</div>`; } 
+                else if (LADDERS[i]) { cell.classList.add('ladder-start'); cell.innerHTML += `<div class="emoji">🪜</div>`; }
                 cells.push(cell);
             }
             for (let row = 9; row >= 0; row--) {
@@ -620,19 +637,14 @@
                 rowCells.forEach(cell => board.appendChild(cell));
             }
         }
-
         function getCellCenter(cellNumber) {
             const cell = document.getElementById(`cell-${cellNumber}`);
             if (!cell) return { x: 0, y: 0 };
             const board = document.getElementById('gameBoard');
             const boardRect = board.getBoundingClientRect();
             const cellRect = cell.getBoundingClientRect();
-            return {
-                x: cellRect.left - boardRect.left + cellRect.width / 2,
-                y: cellRect.top - boardRect.top + cellRect.height / 2
-            };
+            return { x: cellRect.left - boardRect.left + cellRect.width / 2, y: cellRect.top - boardRect.top + cellRect.height / 2 };
         }
-
         function drawSnakesAndLadders() {
             const svg = document.getElementById('svgLayer');
             svg.innerHTML = '';
@@ -664,18 +676,15 @@
                 const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
                 const offset = dist / 4;
                 const control = { x: mid.x + offset * Math.sin(angle), y: mid.y - offset * Math.cos(angle) };
-                
                 const pathData = `M ${p1.x} ${p1.y} Q ${control.x} ${control.y} ${p2.x} ${p2.y}`;
                 svg.innerHTML += `<path d="${pathData}" class="snake-outline" />`;
                 svg.innerHTML += `<path d="${pathData}" class="snake-body" />`;
             }
         }
-        
         function setupNumberOfPlayers() {
             document.getElementById('numPlayers').addEventListener('change', (e) => createPlayerNameInputs(parseInt(e.target.value)));
             createPlayerNameInputs(4);
         }
-
         function createPlayerNameInputs(num) {
             const container = document.getElementById('playerNames');
             container.innerHTML = '';
@@ -683,7 +692,6 @@
                 container.innerHTML += `<div class="input-group"><label for="player${i}Name">👤 Player ${i} Name:</label><input type="text" id="player${i}Name" placeholder="Player ${i}" value="Player ${i}"></div>`;
             }
         }
-        
         function setupVolumeControl() {
             document.getElementById('volumeSlider').addEventListener('input', function() {
                 gameState.volume = this.value / 100;
@@ -691,8 +699,6 @@
                 updateSoundVolume();
             });
         }
-        
-        // [MODIFIED] Set logoUploaded flag on user upload
         function handleLogoUpload(event) {
             const file = event.target.files[0];
             const label = document.getElementById('logoLabel');
@@ -707,20 +713,18 @@
                     const boardImg = document.getElementById('boardLogoImg');
                     boardImg.src = imgSrc;
                     boardImg.style.display = 'block';
-                    gameState.logoUploaded = true; // Set flag here
+                    gameState.logoUploaded = true;
                     label.textContent = `✅ ${file.name} loaded!`;
                     label.style.background = '#d4edda';
                 };
                 reader.readAsDataURL(file);
             }
         }
-
         function setupGameNameInput() {
             document.getElementById('gameNameInput').addEventListener('input', (e) => {
                 document.getElementById('gameTitle').textContent = e.target.value;
             });
         }
-        
         function handleCsvUpload(event) {
             const file = event.target.files[0];
             if (file) {
@@ -729,7 +733,6 @@
                 reader.readAsText(file);
             }
         }
-        
         function parseCSV(csv) {
             try {
                 const lines = csv.split('\n').filter(line => line.trim() !== '');
@@ -761,8 +764,6 @@
                 label.style.borderColor = '#d9534f';
             }
         }
-
-        // [MODIFIED] Set soundsUploaded flag on user upload
         function handleSoundUpload(event, audioId) {
             const file = event.target.files[0];
             const audioEl = document.getElementById(audioId);
@@ -771,17 +772,14 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     audioEl.src = e.target.result;
-                    gameState.soundsUploaded[audioId] = true; // Set flag for this specific sound
+                    gameState.soundsUploaded[audioId] = true;
                     labelEl.textContent = '✅ Loaded';
                     labelEl.style.backgroundColor = '#d4edda';
                 }
                 reader.readAsDataURL(file);
             }
         }
-        
-        // [NEW] Function to load default assets if not provided by user
         async function loadDefaultAssets() {
-            // Load Logo
             if (!gameState.logoUploaded) {
                 const imgSrc = DEFAULT_ASSETS.logo;
                 const headerImg = document.getElementById('gameLogoImg');
@@ -793,22 +791,18 @@
                 boardImg.style.display = 'block';
                 document.getElementById('logoLabel').textContent = `✅ Default logo loaded!`;
             }
-
-            // Load Questions CSV
             if (!gameState.csvUploaded) {
                 try {
                     const response = await fetch(DEFAULT_ASSETS.questions);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const csvText = await response.text();
-                    parseCSV(csvText); // This sets the flag and master questions
+                    parseCSV(csvText);
                     document.getElementById('csvLabel').innerHTML = `✅ Default questions loaded!`;
                 } catch (error) {
                     console.error('Could not load default questions.csv:', error);
                     alert('Could not load default questions. Using built-in fallback questions.');
                 }
             }
-
-            // Load Sounds
             for (const soundId in DEFAULT_ASSETS.sounds) {
                 if (!gameState.soundsUploaded[soundId]) {
                     const audioEl = document.getElementById(soundId);
@@ -821,67 +815,14 @@
                 }
             }
         }
-
-        // [MODIFIED] Revamped startGame to be async and use the asset loader
-        async function startGame() {
-            // 1. Load any necessary default assets if user hasn't provided them.
-            await loadDefaultAssets();
-            
-            // 2. Preserve essential setup state before re-initializing the game logic state.
-            const masterQuestions = gameState.masterQuestions;
-            const currentSetup = {
-                csvUploaded: gameState.csvUploaded,
-                logoUploaded: gameState.logoUploaded,
-                soundsUploaded: gameState.soundsUploaded
-            };
-
-            // 3. Initialize game state for a new match (clears players, positions, etc.).
-            initializeGameState();
-            
-            // 4. Restore the setup state and loaded questions.
-            gameState.masterQuestions = masterQuestions;
-            gameState.availableQuestions = [...masterQuestions];
-            gameState.csvUploaded = currentSetup.csvUploaded;
-            gameState.logoUploaded = currentSetup.logoUploaded;
-            gameState.soundsUploaded = currentSetup.soundsUploaded;
-
-            // 5. Setup players and game parameters from UI inputs.
-            const numPlayers = parseInt(document.getElementById('numPlayers').value);
-            gameState.players = Array.from({ length: numPlayers }, (_, i) => ({
-                name: document.getElementById(`player${i + 1}Name`).value || `Player ${i + 1}`,
-                position: 0,
-                stuckCounter: 0, 
-                color: `player-${i + 1}`
-            }));
-            gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
-            gameState.gameStarted = true;
-            
-            // 6. Transition UI to game view.
-            document.getElementById('setupSection').classList.remove('active');
-            document.getElementById('gameSection').classList.add('active');
-            
-            // 7. Initialize history for the new game.
-            history = [];
-            historyIndex = -1;
-            saveStateToHistory(); 
-
-            // 8. Update all UI elements to reflect the new game state.
-            updateAllUI();
-        }
-        
         function updatePlayersDisplay() {
             const list = document.getElementById('playersList');
             list.innerHTML = gameState.players.map(p => {
                 const colors = { 'player-1':'#e74c3c', 'player-2':'#3498db', 'player-3':'#2ecc71', 'player-4':'#f1c40f', 'player-5':'#9b59b6', 'player-6':'#1abc9c'};
                 const positionText = gameState.winners.find(w => w.name === p.name) ? 'Finished' : (p.position || 'Start');
-                return `
-                <div class="player-item">
-                    <span style="display:inline-block;width:20px;height:20px;border-radius:50%;background-color:${colors[p.color]};margin-right:10px;"></span>
-                    <span>${p.name}</span>
-                    <span>Pos: ${positionText}</span>
-                </div>`}).join('');
+                return `<div class="player-item"><span style="display:inline-block;width:20px;height:20px;border-radius:50%;background-color:${colors[p.color]};margin-right:10px;"></span><span>${p.name}</span><span>Pos: ${positionText}</span></div>`;
+            }).join('');
         }
-        
         function updateCurrentPlayerDisplay() {
             if (gameState.players.length === 0 || isGameOver()) return;
             const player = gameState.players[gameState.currentPlayerIndex];
@@ -890,7 +831,6 @@
             const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
             display.style.background = `linear-gradient(135deg, ${colors[gameState.currentPlayerIndex % colors.length]}, ${colors[(gameState.currentPlayerIndex + 1) % colors.length]})`;
         }
-
         function updateGameBoard() {
             document.querySelectorAll('.player').forEach(p => p.remove());
             gameState.players.forEach((player, index) => {
@@ -907,52 +847,41 @@
                 }
             });
         }
-
         function skipTurn() {
             if (isGameOver() || document.getElementById('rollButton').disabled) return;
-            
             nextPlayer();
             updateAllUI();
             saveStateToHistory();
         }
-        
         function rollDice() {
             if (!gameState.gameStarted || document.getElementById('rollButton').disabled) return;
-            
             const dicePopup = document.getElementById('dicePopup');
             const dicePopupContent = document.getElementById('dicePopupContent');
             const sideBarDice = document.getElementById('dice');
             const rollButton = document.getElementById('rollButton');
             const skipTurnButton = document.getElementById('skipTurnButton');
-
             rollButton.disabled = true;
             skipTurnButton.disabled = true;
-
             dicePopup.classList.add('active');
             dicePopupContent.classList.add('rolling');
             playSound('diceRollSound');
-
             const player = gameState.players[gameState.currentPlayerIndex];
             let forcedRoll = 0;
             if (player.stuckCounter >= MAX_STUCK_TURNS && player.position > (BOARD_SIZE - 6)) {
                 forcedRoll = BOARD_SIZE - player.position;
             }
-
             let rollCount = 0;
             const rollInterval = setInterval(() => {
                 const randomFace = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][Math.floor(Math.random() * 6)];
                 dicePopupContent.textContent = randomFace;
                 sideBarDice.textContent = randomFace;
-
                 if (++rollCount > 10) {
                     clearInterval(rollInterval);
                     const finalRoll = (forcedRoll > 0) ? forcedRoll : Math.floor(Math.random() * 6) + 1;
                     const finalFace = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][finalRoll - 1];
-                    
                     dicePopupContent.textContent = finalFace;
                     sideBarDice.textContent = finalFace;
                     dicePopupContent.classList.remove('rolling');
-
                     setTimeout(() => {
                         dicePopup.classList.remove('active');
                         setTimeout(() => showQuestion(finalRoll), 300);
@@ -960,7 +889,6 @@
                 }
             }, 100);
         }
-        
         function showQuestion(diceRoll) {
             if (gameState.availableQuestions.length === 0) {
                 gameState.availableQuestions = [...gameState.usedQuestions];
@@ -969,17 +897,11 @@
             const level = diceRoll <= 2 ? 'easy' : (diceRoll <= 4 ? 'medium' : 'hard');
             let pool = gameState.availableQuestions.filter(q => q.level === level);
             if (pool.length === 0) pool = gameState.availableQuestions;
-            if (pool.length === 0) {
-                alert('FATAL ERROR: No questions available.');
-                return;
-            }
-
+            if (pool.length === 0) { alert('FATAL ERROR: No questions available.'); return; }
             const questionIndexInPool = Math.floor(Math.random() * pool.length);
             const question = pool[questionIndexInPool];
-            
             gameState.currentQuestion = question;
             gameState.selectedOption = -1;
-            
             document.getElementById('questionPopup').dataset.diceRoll = diceRoll;
             document.getElementById('questionText').textContent = gameState.currentQuestion.question;
             const optionsContainer = document.getElementById('optionsContainer');
@@ -994,7 +916,6 @@
             document.getElementById('questionPopup').classList.add('active');
             startQuestionTimer();
         }
-
         function startQuestionTimer() {
             let timeLeft = gameState.timerDuration;
             const timerEl = document.getElementById('questionTimer');
@@ -1010,53 +931,40 @@
                 }
             }, 1000);
         }
-
         function selectOption(index, el) {
-            if (gameState.isSubmitting) return; 
+            if (gameState.isSubmitting) return;
             document.querySelectorAll('.option.selected').forEach(opt => opt.classList.remove('selected'));
             el.classList.add('selected');
             gameState.selectedOption = index;
         }
-
         function submitAnswer() {
             if (gameState.isSubmitting) return;
             gameState.isSubmitting = true;
-
             const timerTickAudio = document.getElementById('timerTickSound');
-            if (timerTickAudio) {
-                timerTickAudio.pause();
-                timerTickAudio.currentTime = 0;
-            }
-
+            if (timerTickAudio) { timerTickAudio.pause(); timerTickAudio.currentTime = 0; }
             clearInterval(gameState.questionTimer);
             const isCorrect = gameState.selectedOption === gameState.currentQuestion.answer;
             const diceRoll = parseInt(document.getElementById('questionPopup').dataset.diceRoll, 10);
-            
             const questionIndex = gameState.availableQuestions.findIndex(q => q.question === gameState.currentQuestion.question);
             if (questionIndex > -1) {
                 const [usedQuestion] = gameState.availableQuestions.splice(questionIndex, 1);
                 gameState.usedQuestions.push(usedQuestion);
             }
-
             document.querySelectorAll('.option').forEach((opt, i) => {
                 if (i === gameState.currentQuestion.answer) opt.classList.add('correct');
                 else if (i === gameState.selectedOption) opt.classList.add('wrong');
             });
-
             setTimeout(() => {
                 document.getElementById('questionPopup').classList.remove('active');
-                if (isCorrect) playSound('correctSound');
-                else playSound('wrongSound');
+                if (isCorrect) playSound('correctSound'); else playSound('wrongSound');
                 handleMove(diceRoll, isCorrect);
-                gameState.isSubmitting = false; 
+                gameState.isSubmitting = false;
             }, 2000);
         }
-        
         function finishTurn() {
             updateAllUI();
-            if (isGameOver()) {
-                 endGame();
-            } else {
+            if (isGameOver()) { endGame(); } 
+            else {
                 nextPlayer();
                 if (!isGameOver()) {
                     document.getElementById('rollButton').disabled = false;
@@ -1065,107 +973,66 @@
                 saveStateToHistory();
             }
         }
-
         function handleMove(steps, isCorrect) {
             const player = gameState.players[gameState.currentPlayerIndex];
             const oldPosition = player.position;
-
             if (isCorrect) {
                 const newPosition = oldPosition + steps;
-                
-                if (newPosition > BOARD_SIZE) {
-                    player.stuckCounter++; 
-                    finishTurn(); 
-                    return;
-                }
-
+                if (newPosition > BOARD_SIZE) { player.stuckCounter++; finishTurn(); return; }
                 player.position = newPosition;
-                player.stuckCounter = 0; 
+                player.stuckCounter = 0;
                 updateGameBoard();
                 playSound('moveSound');
-
                 setTimeout(() => {
-                    if (LADDERS[player.position]) {
-                        player.position = LADDERS[player.position];
-                        playSound('ladderSound');
-                    }
-
-                    if (player.position === 100 && !gameState.winners.some(w => w.name === player.name)) {
-                        gameState.winners.push(player);
-                        playSound('winSound');
-                    }
+                    if (LADDERS[player.position]) { player.position = LADDERS[player.position]; playSound('ladderSound'); }
+                    if (player.position === 100 && !gameState.winners.some(w => w.name === player.name)) { gameState.winners.push(player); playSound('winSound'); }
                     finishTurn();
                 }, 600);
-
             } else {
                 const potentialPosition = oldPosition + steps;
-                
                 if (SNAKES[potentialPosition] && potentialPosition <= BOARD_SIZE) {
                     player.position = potentialPosition;
                     updateGameBoard();
                     playSound('moveSound');
-                    
-                    setTimeout(() => {
-                        player.position = SNAKES[potentialPosition];
-                        playSound('snakeSound');
-                        finishTurn();
-                    }, 600);
-                } else {
-                    finishTurn();
-                }
+                    setTimeout(() => { player.position = SNAKES[potentialPosition]; playSound('snakeSound'); finishTurn(); }, 600);
+                } else { finishTurn(); }
             }
         }
-        
         function nextPlayer() {
-            do {
-                gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-            } while (gameState.winners.some(p => p.name === gameState.players[gameState.currentPlayerIndex].name) && !isGameOver());
-            
+            do { gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length; } 
+            while (gameState.winners.some(p => p.name === gameState.players[gameState.currentPlayerIndex].name) && !isGameOver());
             updateCurrentPlayerDisplay();
         }
-        
         function endGame() {
             const list = document.getElementById('winnersList');
-            const remainingPlayers = gameState.players
-                .filter(p => !gameState.winners.some(w => w.name === p.name))
-                .sort((a, b) => b.position - a.position);
+            const remainingPlayers = gameState.players.filter(p => !gameState.winners.some(w => w.name === p.name)).sort((a, b) => b.position - a.position);
             const finalRanking = [...gameState.winners, ...remainingPlayers];
-
             list.innerHTML = finalRanking.map((p, i) => {
                 const rankText = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
                 return `<div class="winner-item"><span>${rankText} ${p.name}</span></div>`;
             }).join('');
-            
             document.getElementById('winnersSection').style.display = 'block';
             document.getElementById('rollButton').disabled = true;
             document.getElementById('skipTurnButton').disabled = true;
             document.getElementById('endGameButton').disabled = true;
             document.getElementById('currentPlayerDisplay').textContent = "Game Over!";
-            saveStateToHistory(); 
+            saveStateToHistory();
         }
-        
         function forceEndGame() {
             if (!gameState.gameStarted || isGameOver()) return;
-            if (confirm('Are you sure you want to end the game and declare winners now?')) {
-                endGame();
-            }
+            if (confirm('Are you sure you want to end the game and declare winners now?')) { endGame(); }
         }
-        
         function resetGame() {
             initializeGameState();
             gameState.masterQuestions = [...DEFAULT_QUESTIONS];
-            
             const headerImg = document.getElementById('gameLogoImg');
-            headerImg.src = '';
-            headerImg.style.display = 'none';
+            headerImg.src = ''; headerImg.style.display = 'none';
             headerImg.parentElement.querySelector('span').style.display = 'inline';
             const boardImg = document.getElementById('boardLogoImg');
-            boardImg.src = '';
-            boardImg.style.display = 'none';
+            boardImg.src = ''; boardImg.style.display = 'none';
             document.getElementById('logoUpload').value = "";
             document.getElementById('logoLabel').innerHTML = `📁 Click to upload Logo`;
             document.getElementById('logoLabel').style.background = '#ecf0f1';
-            
             document.getElementById('gameSection').classList.remove('active');
             document.getElementById('setupSection').classList.add('active');
             document.getElementById('winnersSection').style.display = 'none';
@@ -1174,25 +1041,21 @@
             document.getElementById('skipTurnButton').disabled = false;
             document.getElementById('endGameButton').disabled = true;
             document.getElementById('svgLayer').innerHTML = '';
-            
             const csvLabel = document.getElementById('csvLabel');
             csvLabel.innerHTML = `📁 Click to upload CSV<br><small>Format: q,o1,o2,o3,o4,ans,lvl</small>`;
             csvLabel.style.background = '#ecf0f1';
             csvLabel.style.borderColor = '#bdc3c7';
             document.getElementById('csvUpload').value = "";
-
             document.querySelectorAll('.sound-upload-label').forEach(label => {
                 label.textContent = 'Select file...';
                 label.style.backgroundColor = '#ecf0f1';
             });
             document.querySelectorAll('.sound-effects audio').forEach(audio => { audio.src = ''; });
-
             history = [];
             historyIndex = -1;
             updateHistoryButtons();
             createBoard();
         }
-        
         function playSound(soundId) {
             if (gameState.soundEnabled) {
                 const audio = document.getElementById(soundId);
@@ -1203,19 +1066,14 @@
                 }
             }
         }
-        
-        function updateSoundVolume() {
-            document.querySelectorAll('audio').forEach(audio => audio.volume = gameState.volume);
-        }
-        
+        function updateSoundVolume() { document.querySelectorAll('audio').forEach(audio => audio.volume = gameState.volume); }
         function toggleFullscreen() {
             const el = document.getElementById('gameContainer');
             if (!document.fullscreenElement) el.requestFullscreen().catch(err => console.error(err));
             else document.exitFullscreen();
         }
-        
         document.addEventListener('fullscreenchange', () => {
-            const btn = document.querySelector('.fullscreen-btn');
+            const btn = document.getElementById('fullscreenBtn');
             btn.textContent = document.fullscreenElement ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
         });
 

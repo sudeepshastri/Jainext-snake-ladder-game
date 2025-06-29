@@ -428,6 +428,13 @@
             }
         };
 
+        // [NEW] A small, hardcoded backup list in case the CSV fails to load.
+        const BACKUP_QUESTIONS = [
+            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: 2, level: "easy" },
+            { question: "What is 8 x 7?", options: ["54", "56", "64", "68"], answer: 1, level: "medium" },
+            { question: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "Jane Austen", "William Shakespeare", "Mark Twain"], answer: 2, level: "hard" }
+        ];
+
         // Game State
         let gameState = {};
         let history = [];
@@ -435,28 +442,54 @@
         const MAX_HISTORY = 10;
         const MAX_STUCK_TURNS = 4;
 
-        // [CORRECTED] Removed the extra outer array `[ [ ... ] ]` -> `[ { ... } ]`
-        const DEFAULT_QUESTIONS_RAW = [
-            { "प्रश्न": "रिक्त स्थान की पूर्ति करें: \"शुद्धातम है मेरा नाम, मात्र ______ मेरा काम ।\"", "विकल्प A": "जानना", "विकल्प B": "गाना", "विकल्प C": "पाना", "विकल्प D": "ध्याना", "सही उत्तर": 1, "Level": "Easy" },
-            // ... (The rest of your 600+ questions go here, I've truncated for brevity)
-            { "प्रश्न": "'चिदानंद रस' का पान कौन करते हैं?", "विकल्प A": "जो राग-द्वेष का त्याग करते हैं", "विकल्प B": "जो राग-द्वेष करते हैं", "विकल्प C": "जो भोजन करते हैं", "विकल्प D": "जो संसार में घूमते हैं", "सही उत्तर": 1, "Level": "Medium" }
-        ];
-
-        // [NEW] This function converts your questions into the format the game understands.
-        function formatDefaultQuestions(rawQuestions) {
-            return rawQuestions.map(q => {
-                // Check if the question object is valid
-                if (!q["प्रश्न"] || !q["विकल्प A"] || !q["सही उत्तर"] || !q["Level"]) {
-                    console.error("Invalid question format found:", q);
-                    return null; // Skip invalid questions
+        // [NEW] Universal CSV parser function
+        function parseCsvToQuestions(csvText) {
+            try {
+                const questions = [];
+                // Split by newline, filter out empty lines
+                const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+                
+                for (const line of lines) {
+                    // This regex handles quotes correctly, allowing commas inside quoted fields.
+                    const parts = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)
+                                    .map(part => part.trim().replace(/^"|"$/g, ''));
+                    
+                    if (parts.length >= 7) {
+                        questions.push({
+                            question: parts[0],
+                            options: [parts[1], parts[2], parts[3], parts[4]],
+                            answer: parseInt(parts[5], 10) - 1, // 1-based to 0-based
+                            level: parts[6].toLowerCase()
+                        });
+                    }
                 }
-                return {
-                    question: q["प्रश्न"],
-                    options: [q["विकल्प A"], q["विकल्प B"], q["विकल्प C"], q["विकल्प D"]],
-                    answer: q["सही उत्तर"] - 1, // Convert 1-based answer to 0-based index
-                    level: q["Level"].toLowerCase()
-                };
-            }).filter(q => q !== null); // Remove any null (invalid) questions from the final list
+                return questions.length > 0 ? questions : null;
+            } catch (error) {
+                console.error("Error parsing CSV data:", error);
+                return null;
+            }
+        }
+
+        // [NEW] Function to load default questions from the CSV file on startup.
+        async function loadDefaultQuestionsFromCSV() {
+            try {
+                const response = await fetch('assets/questions.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvText = await response.text();
+                const parsedQuestions = parseCsvToQuestions(csvText);
+                
+                if (parsedQuestions) {
+                    gameState.masterQuestions = parsedQuestions;
+                    console.log(`${parsedQuestions.length} default questions loaded successfully from CSV.`);
+                } else {
+                    throw new Error("CSV file is empty or formatted incorrectly.");
+                }
+            } catch (error) {
+                console.warn(`Could not load default questions from 'assets/questions.csv'. Error: ${error.message}. Using backup questions.`);
+                gameState.masterQuestions = BACKUP_QUESTIONS;
+            }
         }
 
 
@@ -480,10 +513,12 @@
             };
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        // [MODIFIED] DOMContentLoaded is now async to wait for questions to load.
+        document.addEventListener('DOMContentLoaded', async function() {
             initializeGameState();
-            // [CORRECTED] Use the formatter function to prepare the questions
-            gameState.masterQuestions = formatDefaultQuestions(DEFAULT_QUESTIONS_RAW);
+            await loadDefaultQuestionsFromCSV(); // Wait for default questions to load
+            
+            // The rest of the setup
             loadDefaultLogo();
             setupNumberOfPlayers();
             createBoard();
@@ -499,6 +534,9 @@
                 }
             });
         });
+
+        // ... (The rest of the JS code from the previous correct version remains the same) ...
+        // (handleLogoUpload, handleCsvUpload, startGame, etc.)
 
         function loadDefaultLogo() {
             const defaultLogoSrc = DEFAULT_ASSETS.logo;
@@ -766,44 +804,29 @@
             });
         }
         
+        // [MODIFIED] This function now uses the universal parser
         function handleCsvUpload(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => parseCSV(e.target.result);
-                reader.readAsText(file);
-            }
-        }
-        
-        function parseCSV(csv) {
-            try {
-                const lines = csv.split('\n').filter(line => line.trim() !== '');
-                const questions = [];
-                for (let i = 0; i < lines.length; i++) {
-                    const parts = lines[i].split(',').map(part => part.trim().replace(/"/g, ''));
-                    if (parts.length >= 7) {
-                        questions.push({
-                            question: parts[0],
-                            options: [parts[1], parts[2], parts[3], parts[4]],
-                            answer: parseInt(parts[5]) - 1,
-                            level: parts[6].toLowerCase()
-                        });
+                reader.onload = (e) => {
+                    const parsedQuestions = parseCsvToQuestions(e.target.result);
+                    if (parsedQuestions) {
+                        gameState.masterQuestions = parsedQuestions;
+                        gameState.csvUploaded = true;
+                        const label = document.getElementById('csvLabel');
+                        label.innerHTML = `✅ ${parsedQuestions.length} questions loaded!`;
+                        label.style.background = '#d4edda';
+                        label.style.borderColor = '#28a745';
+                    } else {
+                        alert(`Error parsing CSV. Please check the file format.`);
+                        const label = document.getElementById('csvLabel');
+                        label.innerHTML = `❌ Error loading file. Try again.`;
+                        label.style.background = '#f8d7da';
+                        label.style.borderColor = '#d9534f';
                     }
-                }
-                if (questions.length > 0) {
-                    gameState.masterQuestions = questions;
-                    gameState.csvUploaded = true;
-                    const label = document.getElementById('csvLabel');
-                    label.innerHTML = `✅ ${questions.length} questions loaded!`;
-                    label.style.background = '#d4edda';
-                    label.style.borderColor = '#28a745';
-                } else { throw new Error("CSV file is empty or has no valid question rows."); }
-            } catch (error) {
-                alert(`Error parsing CSV: ${error.message}`);
-                const label = document.getElementById('csvLabel');
-                label.innerHTML = `❌ Error loading file. Try again.`;
-                label.style.background = '#f8d7da';
-                label.style.borderColor = '#d9534f';
+                };
+                reader.readAsText(file);
             }
         }
 
@@ -823,14 +846,15 @@
         }
         
         function startGame() {
-            // No need to re-initialize or re-format questions here if they are already set.
-            // gameState.masterQuestions is set on DOMContentLoaded or by CSV upload.
-            
-            // Re-initialize game state variables for a fresh game
-            const masterQuestions = gameState.masterQuestions; // preserve loaded questions
+            const masterQuestions = gameState.masterQuestions;
             initializeGameState();
             gameState.masterQuestions = masterQuestions;
 
+            if (gameState.masterQuestions.length === 0) {
+                alert("Error: No questions have been loaded. Please upload a CSV or ensure 'assets/questions.csv' is available.");
+                return;
+            }
+            
             gameState.availableQuestions = [...gameState.masterQuestions];
             gameState.usedQuestions = [];
 
@@ -1139,10 +1163,9 @@
             }
         }
         
-        function resetGame() {
+        async function resetGame() {
             initializeGameState();
-            // [CORRECTED] Reset questions using the formatter
-            gameState.masterQuestions = formatDefaultQuestions(DEFAULT_QUESTIONS_RAW);
+            await loadDefaultQuestionsFromCSV(); // Reload default questions
             
             loadDefaultLogo();
             loadDefaultSounds();
@@ -1156,6 +1179,8 @@
             csvLabel.style.background = '#ecf0f1';
             csvLabel.style.borderColor = '#bdc3c7';
             document.getElementById('csvUpload').value = "";
+            gameState.csvUploaded = false;
+
 
             document.querySelectorAll('.sound-upload-label').forEach(label => {
                 label.textContent = 'Select file...';

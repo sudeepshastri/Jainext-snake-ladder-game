@@ -51,12 +51,13 @@
         .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
         .title-text { color: white; font-size: 2.2em; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         
-        .controls { display: flex; gap: 20px; align-items: center; }
+        .controls { display: flex; gap: 15px; align-items: center; }
         .volume-control { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 25px; }
         .volume-slider { width: 80px; }
         
-        .fullscreen-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1em; transition: all 0.3s ease; }
-        .fullscreen-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .header-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1em; transition: all 0.3s ease; }
+        .header-btn:hover:not(:disabled) { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .header-btn:disabled { background: var(--button-disabled-bg); cursor: not-allowed; opacity: 0.6; transform: none !important; }
         
         .main-container { flex: 1; display: flex; padding: 20px; gap: 20px; overflow: hidden; }
         .game-board-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
@@ -260,7 +261,6 @@
         }
         @keyframes roll { from { transform: rotate(0deg) scale(1.1); } to { transform: rotate(360deg) scale(1.1); } }
 
-        /* [NEW] Guideline Popup Styles */
         .guideline-card {
             background: white;
             border-radius: 20px;
@@ -332,7 +332,10 @@
                     <span id="volumeIcon">🔊</span>
                     <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
                 </div>
-                <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                <button class="header-btn" id="headerStartBtn" onclick="startGame()">🚀 Start Game</button>
+                <button class="header-btn" id="headerNewGameBtn" onclick="resetGame()">🔄 New Game</button>
+                <button class="header-btn" id="headerEndGameBtn" onclick="forceEndGame()">🏆 Declare Winner</button>
+                <button class="header-btn" id="headerFullscreenBtn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
             </div>
         </div>
         
@@ -422,8 +425,6 @@
                         <button class="btn btn-secondary" id="undoButton" onclick="undoStep()">↶ Undo</button>
                         <button class="btn btn-secondary" id="redoButton" onclick="redoStep()">Redo ↷</button>
                     </div>
-                    <button class="btn btn-secondary" id="endGameButton" onclick="forceEndGame()" style="width:100%; margin-bottom: 10px;">Declare Winners</button>
-                    <button class="btn btn-primary" id="newGameButton" onclick="resetGame()" style="width:100%; margin-bottom: 10px;">🔄 New Game</button>
                     <p class="developer-credit">Developed by Sudeep Jain Shastri</p>
                 </div>
             </div>
@@ -442,7 +443,6 @@
             <div class="dice-popup-content" id="dicePopupContent">🎲</div>
         </div>
         
-        <!-- [NEW] Guideline Popup -->
         <div class="question-popup" id="guidelinePopup">
             <div class="guideline-card">
                  <button class="guideline-close-btn" onclick="closeGuidelinesAndStart()">Start Game →</button>
@@ -525,6 +525,7 @@
             setupVolumeControl();
             setupGameNameInput();
             updateHistoryButtons();
+            updateHeaderButtons();
             
             document.addEventListener('keydown', handleKeyboardShortcuts);
 
@@ -534,6 +535,15 @@
                 }
             });
         });
+        
+        function updateHeaderButtons() {
+            const gameIsOver = isGameOver();
+            const gameIsInProgress = gameState.gameStarted && !gameIsOver;
+
+            document.getElementById('headerStartBtn').disabled = gameState.gameStarted;
+            document.getElementById('headerEndGameBtn').disabled = !gameIsInProgress;
+            // New Game and Fullscreen are always enabled.
+        }
 
         function handleKeyboardShortcuts(event) {
             const activeElement = document.activeElement;
@@ -627,13 +637,13 @@
         }
 
         function updateAllUI() {
-            const gameIsOver = isGameOver();
-            document.getElementById('endGameButton').disabled = !gameState.gameStarted || gameIsOver;
+            updateHeaderButtons();
             updatePlayersDisplay();
             updateCurrentPlayerDisplay();
             updateGameBoard();
             setTimeout(drawSnakesAndLadders, 50);
             
+            const gameIsOver = isGameOver();
             const rollButtonsDisabled = gameIsOver || !gameState.gameStarted;
             document.getElementById('rollButton').disabled = rollButtonsDisabled;
             document.getElementById('skipTurnButton').disabled = rollButtonsDisabled;
@@ -867,7 +877,6 @@
             }
         }
 
-        // [MODIFIED] Renamed from startGame to run the core game setup logic.
         async function initializeAndRunGame() {
             await loadDefaultAssets();
             
@@ -906,24 +915,19 @@
             updateAllUI();
         }
         
-        // [NEW] This function is now called by the "Start Game" button. It opens the guideline popup.
         function startGame() {
             const popup = document.getElementById('guidelinePopup');
             const frame = document.getElementById('guidelineFrame');
             
-            // Set the source for the PDF viewer, assuming it's in an 'assets' folder
             frame.src = 'assets/Game-Guidelines.pdf'; 
             
-            // Show the popup
             popup.classList.add('active');
         }
 
-        // [NEW] This function is called by the button inside the guideline popup.
         async function closeGuidelinesAndStart() {
             const popup = document.getElementById('guidelinePopup');
             popup.classList.remove('active');
             
-            // Now, proceed to the actual game setup.
             await initializeAndRunGame();
         }
         
@@ -1197,8 +1201,8 @@
             document.getElementById('winnersSection').style.display = 'block';
             document.getElementById('rollButton').disabled = true;
             document.getElementById('skipTurnButton').disabled = true;
-            document.getElementById('endGameButton').disabled = true;
             document.getElementById('currentPlayerDisplay').textContent = "Game Over!";
+            updateHeaderButtons();
             saveStateToHistory(); 
         }
         
@@ -1210,6 +1214,12 @@
         }
         
         function resetGame() {
+            if (gameState.gameStarted && !isGameOver()) {
+                if (!confirm('Are you sure you want to end the current game and start a new one?')) {
+                    return;
+                }
+            }
+
             initializeGameState();
             gameState.masterQuestions = [...DEFAULT_QUESTIONS];
             
@@ -1230,7 +1240,6 @@
             document.getElementById('dice').textContent = '🎲';
             document.getElementById('rollButton').disabled = false;
             document.getElementById('skipTurnButton').disabled = false;
-            document.getElementById('endGameButton').disabled = true;
             document.getElementById('svgLayer').innerHTML = '';
             
             const csvLabel = document.getElementById('csvLabel');
@@ -1248,6 +1257,7 @@
             history = [];
             historyIndex = -1;
             updateHistoryButtons();
+            updateHeaderButtons();
             createBoard();
         }
         
@@ -1273,7 +1283,7 @@
         }
         
         document.addEventListener('fullscreenchange', () => {
-            const btn = document.querySelector('.fullscreen-btn');
+            const btn = document.getElementById('headerFullscreenBtn');
             btn.textContent = document.fullscreenElement ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
         });
 

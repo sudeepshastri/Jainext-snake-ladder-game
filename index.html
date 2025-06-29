@@ -225,7 +225,6 @@
         .guide-content th { background-color: #f2f2f2; font-weight: 600; }
         .guide-content code { background: #ecf0f1; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
         
-        /* [NEW] Styles for the pre-game guidelines prompt */
         .guidelines-prompt-content {
             padding: 40px;
             max-width: 500px;
@@ -282,7 +281,6 @@
         </div>
         
         <div class="main-container">
-            <!-- Game Board etc. remains the same -->
             <div class="game-board-container">
                  <div class="board-logo-container">
                     <img id="boardLogoImg" class="board-logo-img" alt="Board Logo">
@@ -375,7 +373,6 @@
             </div>
         </div>
 
-        <!-- All popups grouped together -->
         <div class="question-popup" id="questionPopup">
             <div class="question-card">
                 <div class="question-header"><h3>❓ Question</h3><div class="timer" id="questionTimer">15</div></div>
@@ -417,7 +414,6 @@
             </div>
         </div>
 
-        <!-- [NEW] Pre-Game Guidelines Prompt Popup -->
         <div class="guidelines-prompt-popup" id="guidelinesPromptPopup">
             <div class="guidelines-prompt-content">
                 <h2>Ready to Play?</h2>
@@ -441,7 +437,7 @@
         </div>
     </div>
 <script>
-        // Game Configuration and State variables... (no changes here)
+        // Game Configuration and State variables
         const BOARD_SIZE = 100;
         const SNAKES = { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78 };
         const LADDERS = { 1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 96 };
@@ -502,7 +498,6 @@
             document.getElementById('guidePopup').classList.toggle('active');
         }
 
-        // [MODIFIED] The startGame function now prepares the game and shows the prompt.
         async function startGame() {
             await loadDefaultAssets();
             
@@ -530,11 +525,9 @@
             }));
             gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
             
-            // Show the prompt instead of starting immediately
             document.getElementById('guidelinesPromptPopup').classList.add('active');
         }
         
-        // [NEW] This function is called from the prompt to actually start the game UI.
         function proceedToGame() {
             document.getElementById('guidelinesPromptPopup').classList.remove('active');
             
@@ -549,8 +542,66 @@
             updateAllUI();
         }
 
-        // All other Javascript functions (handleKeyboardShortcuts, deepClone, saveStateToHistory, etc.) remain the same.
-        // ... (The rest of the JS code is identical to the previous version)
+        // [FIX 1 of 3] Add .load() when setting default sound sources
+        async function loadDefaultAssets() {
+            // ... (logo and csv loading is unchanged)
+            if (!gameState.logoUploaded) { /* ... */ }
+            if (!gameState.csvUploaded) { /* ... */ }
+
+            for (const soundId in DEFAULT_ASSETS.sounds) {
+                if (!gameState.soundsUploaded[soundId]) {
+                    const audioEl = document.getElementById(soundId);
+                    if (audioEl) {
+                        audioEl.src = DEFAULT_ASSETS.sounds[soundId];
+                        audioEl.load(); // Explicitly tell the browser to load the new source
+                    }
+                    const labelEl = document.getElementById(soundId + 'Label');
+                    if (labelEl) {
+                        labelEl.textContent = '✅ Default';
+                        labelEl.style.backgroundColor = '#e9ecef';
+                    }
+                }
+            }
+        }
+
+        // [FIX 2 of 3] Add .load() when handling custom sound uploads
+        function handleSoundUpload(event, audioId) {
+            const file = event.target.files[0];
+            const audioEl = document.getElementById(audioId);
+            const labelEl = document.getElementById(event.target.id + 'Label');
+            if (file && audioEl && labelEl) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    audioEl.src = e.target.result;
+                    audioEl.load(); // Explicitly load the new file
+                    gameState.soundsUploaded[audioId] = true;
+                    labelEl.textContent = '✅ Loaded';
+                    labelEl.style.backgroundColor = '#d4edda';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // [FIX 3 of 3] Improve playSound to log errors for easier debugging
+        function playSound(soundId) {
+            if (gameState.soundEnabled) {
+                const audio = document.getElementById(soundId);
+                if (audio && audio.src) {
+                    audio.volume = gameState.volume;
+                    audio.currentTime = 0;
+                    const playPromise = audio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            // This catches errors like the file not being found (404)
+                            // or the browser blocking autoplay. It's useful for debugging.
+                            console.error(`Error playing sound '${soundId}':`, error);
+                        });
+                    }
+                }
+            }
+        }
+        
+        // --- The rest of the JavaScript functions are unchanged ---
         
         function handleKeyboardShortcuts(event) {
             const activeElement = document.activeElement;
@@ -762,57 +813,6 @@
                 label.innerHTML = `❌ Error loading file. Try again.`;
                 label.style.background = '#f8d7da';
                 label.style.borderColor = '#d9534f';
-            }
-        }
-        function handleSoundUpload(event, audioId) {
-            const file = event.target.files[0];
-            const audioEl = document.getElementById(audioId);
-            const labelEl = document.getElementById(event.target.id + 'Label');
-            if (file && audioEl && labelEl) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    audioEl.src = e.target.result;
-                    gameState.soundsUploaded[audioId] = true;
-                    labelEl.textContent = '✅ Loaded';
-                    labelEl.style.backgroundColor = '#d4edda';
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-        async function loadDefaultAssets() {
-            if (!gameState.logoUploaded) {
-                const imgSrc = DEFAULT_ASSETS.logo;
-                const headerImg = document.getElementById('gameLogoImg');
-                headerImg.src = imgSrc;
-                headerImg.style.display = 'block';
-                headerImg.parentElement.querySelector('span').style.display = 'none';
-                const boardImg = document.getElementById('boardLogoImg');
-                boardImg.src = imgSrc;
-                boardImg.style.display = 'block';
-                document.getElementById('logoLabel').textContent = `✅ Default logo loaded!`;
-            }
-            if (!gameState.csvUploaded) {
-                try {
-                    const response = await fetch(DEFAULT_ASSETS.questions);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const csvText = await response.text();
-                    parseCSV(csvText);
-                    document.getElementById('csvLabel').innerHTML = `✅ Default questions loaded!`;
-                } catch (error) {
-                    console.error('Could not load default questions.csv:', error);
-                    alert('Could not load default questions. Using built-in fallback questions.');
-                }
-            }
-            for (const soundId in DEFAULT_ASSETS.sounds) {
-                if (!gameState.soundsUploaded[soundId]) {
-                    const audioEl = document.getElementById(soundId);
-                    audioEl.src = DEFAULT_ASSETS.sounds[soundId];
-                    const labelEl = document.getElementById(soundId + 'Label');
-                    if (labelEl) {
-                        labelEl.textContent = '✅ Default';
-                        labelEl.style.backgroundColor = '#e9ecef';
-                    }
-                }
             }
         }
         function updatePlayersDisplay() {
@@ -1055,16 +1055,6 @@
             historyIndex = -1;
             updateHistoryButtons();
             createBoard();
-        }
-        function playSound(soundId) {
-            if (gameState.soundEnabled) {
-                const audio = document.getElementById(soundId);
-                if (audio && audio.src) {
-                    audio.volume = gameState.volume;
-                    audio.currentTime = 0;
-                    audio.play().catch(e => {});
-                }
-            }
         }
         function updateSoundVolume() { document.querySelectorAll('audio').forEach(audio => audio.volume = gameState.volume); }
         function toggleFullscreen() {

@@ -1,422 +1,458 @@
-<script>
-        // Game Configuration
-        const BOARD_SIZE = 100;
-        const SNAKES = { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 63, 95: 55, 99: 18 };
-        const LADDERS = { 1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 96 };
+<body>
+    <div class="fullscreen-container" id="gameContainer">
+        <div class="header">
+            <div class="game-title">
+                <div class="logo-container">
+                    <span>🎲</span>
+                    <img class="logo-img" id="gameLogoImg" alt="Game Logo">
+                </div>
+                <div class="title-text" id="gameTitle">Jainext Snake & Ladder Game</div>
+            </div>
+            <!-- --- MODIFICATION: Updated header controls --- -->
+            <div class="controls">
+                <div class="volume-control">
+                    <span id="volumeIcon">🔊</span>
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
+                </div>
+                <button class="header-btn" id="headerStartBtn" onclick="beginGameSetup()">🚀 Start Game</button>
+                <button class="header-btn" id="headerNewGameBtn" onclick="resetGame()">🔄 New Game</button>
+                <button class="header-btn" id="headerGuidelinesBtn" onclick="showGuidelines()">📜 Guidelines</button>
+                <button class="header-btn" id="headerEndGameBtn" onclick="forceEndGame()">🏆 Declare Winner</button>
+                <button class="header-btn" id="headerFullscreenBtn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+            </div>
+        </div>
         
-        const DEFAULT_ASSETS = {
-            logo: 'assets/logo.png',
-            questions: 'assets/questions.csv',
-            sounds: {
-                timerTickSound: 'assets/Timer_Tick.mp3',
-                diceRollSound: 'assets/Dice_Roll.mp3',
-                correctSound: 'assets/Correct_Answer.mp3',
-                wrongSound: 'assets/Wrong_Answer.mp3',
-                moveSound: 'assets/Player_Move.mp3',
-                snakeSound: 'assets/Snake.mp3',
-                ladderSound: 'assets/Ladder.mp3',
-                winSound: 'assets/Wrong_Answer.mp3'
-            }
-        };
+        <div class="main-container">
+            <div class="game-board-container">
+                 <div class="board-logo-container">
+                    <img id="boardLogoImg" class="board-logo-img" alt="Board Logo">
+                </div>
+                <div class="game-board" id="gameBoard">
+                    <svg id="svgLayer" class="svg-layer"></svg>
+                </div>
+            </div>
+            
+            <div class="side-panel">
+                <div class="setup-section active" id="setupSection">
+                    <h2 class="section-title">🎮 Game Setup</h2>
+                    <div class="input-group"><label for="gameNameInput">🏷️ Game Name:</label><input type="text" id="gameNameInput" value="Jainext Snake & Ladder Game" placeholder="Enter game name"></div>
+                    <div class="input-group"><label for="numPlayers">👥 Number of Players (2-6):</label><select id="numPlayers"><option value="2">2 Players</option><option value="3">3 Players</option><option value="4" selected>4 Players</option><option value="5">5 Players</option><option value="6">6 Players</option></select></div>
+                    <div id="playerNames"></div>
+                    <div class="input-group"><label for="timerDuration">⏱️ Question Timer (seconds):</label><select id="timerDuration"><option value="5">5s</option><option value="10">10s</option><option value="15" selected>15s</option><option value="20">20s</option><option value="25">25s</option><option value="30">30s</option></select></div>
+                    <div class="input-group"><label>🖼️ Upload Game Logo:</label><div class="file-upload"><input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)"><label for="logoUpload" class="file-upload-label" id="logoLabel">📁 Click to upload Logo</label></div></div>
+                    <div class="input-group"><label>📄 Upload Questions CSV:</label><div class="file-upload"><input type="file" id="csvUpload" accept=".csv" onchange="handleCsvUpload(event)"><label for="csvUpload" class="file-upload-label" id="csvLabel">📁 Click to upload CSV<br><small>Format: q,o1,o2,o3,o4,ans,lvl,group</small></label></div></div>
+                    
+                    <div class="input-group">
+                        <h3 style="font-size:1.1em; color:#2c3e50; margin-bottom:10px; text-align:center;">🔊 Upload Custom Sounds (Optional)</h3>
+                         <div class="sound-upload-group">
+                            <label>Timer Tick:</label>
+                            <label for="timerTickSoundUpload" class="sound-upload-label" id="timerTickSoundUploadLabel">Select file...</label>
+                            <input type="file" id="timerTickSoundUpload" accept="audio/*" onchange="handleSoundUpload(event, 'timerTickSound')" style="display:none;">
+                        </div>
+                        <div class="sound-upload-group">
+                            <label>Dice Roll:</label>
+                            <label for="diceSoundUpload" class="sound-upload-label" id="diceSoundUploadLabel">Select file...</label>
+                            <input type="file" id="diceSoundUpload" accept="audio/*" onchange="handleSoundUpload(event, 'diceRollSound')" style="display:none;">
+                        </div>
+                        <div class="sound-upload-group">
+                            <label>Correct Answer:</label>
+                            <label for="correctSoundUpload" class="sound-upload-label" id="correctSoundUploadLabel">Select file...</label>
+                            <input type="file" id="correctSoundUpload" accept="audio/*" onchange="handleSoundUpload(event, 'correctSound')" style="display:none;">
+                        </div>
+                        <div class="sound-upload-group">
+                            <label>Wrong Answer:</label>
+                            <label for="wrongSoundUpload" class="sound-upload-label" id="wrongSoundUploadLabel">Select file...</label>
+                            <input type="file" id="wrongSoundUpload" accept="audio/*" onchange="handleSoundUpload(event, 'wrongSound')" style="display:none;">
+                        </div>
+                        <div class="sound-upload-group">
+                            <label>Player Move:</label>
+                            <label for="moveSoundUpload" class="sound-upload-label" id="moveSoundUploadLabel">Select file...</label>
+                            <input type="file" id="moveSoundUpload" accept="audio/*" onchange="handleSoundUpload(event, 'moveSound')" style="display:none;">
+                        </div>
+                        <div class="sound-upload-group">
+                            <label>Snake:</label>
+                            <label for="snakeSoundUpload" class="sound-upload-label" id="snakeSoundUploadLabel">Select file...</label>
+                            <input type="file" id="snakeSoundUpload" accept="audio/*" onchange="handleSoundUpload(event, 'snakeSound')" style="display:none;">
+                        </div>
+                        <div class="sound-upload-group">
+                            <label>Ladder:</label>
+                            <label for="ladderSoundUpload" class="sound-upload-label" id="ladderSoundUploadLabel">Select file...</label>
+                            <input type="file" id="ladderSoundUpload" accept="audio/*" onchange="handleSoundUpload(event, 'ladderSound')" style="display:none;">
+                        </div>
+                        <div class="sound-upload-group">
+                            <label>Win Game:</label>
+                            <label for="winSoundUpload" class="sound-upload-label" id="winSoundUploadLabel">Select file...</label>
+                            <input type="file" id="winSoundUpload" accept="audio/*" onchange="handleSoundUpload(event, 'winSound')" style="display:none;">
+                        </div>
+                    </div>
+                    <!-- --- MODIFICATION: Changed onclick for the setup start button --- -->
+                    <button class="btn btn-primary" onclick="beginGameSetup()" style="width: 100%;">🚀 Start Game</button>
+                </div>
+                
+                <div class="game-section" id="gameSection">
+                    <h2 class="section-title">🎯 Game Status</h2>
+                    <div class="current-player" id="currentPlayerDisplay">Player 1's Turn</div>
+                    <div class="dice-container">
+                        <div class="dice" id="dice" onclick="rollDice()">🎲</div>
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button class="btn btn-success" onclick="rollDice()" id="rollButton">🎲 Roll Dice</button>
+                            <button class="btn btn-secondary" onclick="skipTurn()" id="skipTurnButton">Skip Turn</button>
+                        </div>
+                    </div>
+                    <div class="players-list" id="playersList"></div>
+                    <div class="winners-section" id="winnersSection" style="display: none;"><h3>🏆 Winners</h3><div id="winnersList"></div></div>
+                </div>
+                
+                <div class="side-panel-footer">
+                    <div class="history-controls">
+                        <button class="btn btn-secondary" id="undoButton" onclick="undoStep()">↶ Undo</button>
+                        <button class="btn btn-secondary" id="redoButton" onclick="redoStep()">Redo ↷</button>
+                    </div>
+                    <p class="developer-credit">Developed by Sudeep Jain Shastri</p>
+                </div>
+            </div>
+        </div>
 
-        // Game State
-        let gameState = {};
-        let history = [];
-        let historyIndex = -1;
-        const MAX_HISTORY = 10;
-        const MAX_STUCK_TURNS = 4;
+        <div class="question-popup" id="questionPopup">
+            <div class="question-card">
+                <div class="question-header"><h3>❓ Question</h3><div class="timer" id="questionTimer">15</div></div>
+                <div class="question-text" id="questionText">Loading question...</div>
+                <div class="options-container" id="optionsContainer"></div>
+                <button class="btn btn-primary" onclick="submitAnswer()" id="submitButton" style="width: 100%;">✅ Submit Answer</button>
+            </div>
+        </div>
 
-        const DEFAULT_QUESTIONS_RAW_CSV = `question,option1,option2,option3,option4,answer,level,group
+        <div class="dice-popup" id="dicePopup">
+            <div class="dice-popup-content" id="dicePopupContent">🎲</div>
+        </div>
+        
+        <div class="question-popup" id="guidelinePopup">
+            <div class="guideline-card">
+                 <!-- --- MODIFICATION: Guideline close button now just closes the popup --- -->
+                 <button class="guideline-close-btn" onclick="closeGuidelines()">Close</button>
+                 <iframe id="guidelineFrame" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+        
+        <div class="question-popup" id="groupSelectionPopup">
+            <div class="question-card">
+                <h2 class="section-title">Select a Question Group</h2>
+                <div id="groupOptionsContainer">
+                    <!-- Group options will be dynamically inserted here -->
+                </div>
+                <button class="btn btn-success" onclick="finalizeGameStart()" id="finalizeStartBtn" style="width: 100%; margin-top: 20px;" disabled>Play with Selected Group</button>
+            </div>
+        </div>
+
+        <div class="sound-effects" style="display: none;">
+            <audio id="timerTickSound" src=""></audio>
+            <audio id="diceRollSound" src=""></audio>
+            <audio id="correctSound" src=""></audio>
+            <audio id="wrongSound" src=""></audio>
+            <audio id="moveSound" src=""></audio>
+            <audio id="snakeSound" src=""></audio>
+            <audio id="ladderSound" src=""></audio>
+            <audio id="winSound" src=""></audio>
+        </div>
+
+<script>
+    // Game Configuration
+    const BOARD_SIZE = 100;
+    const SNAKES = { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 63, 95: 55, 99: 18 };
+    const LADDERS = { 1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 96 };
+    
+    const DEFAULT_ASSETS = {
+        logo: 'assets/logo.png',
+        questions: 'assets/questions.csv',
+        sounds: {
+            timerTickSound: 'assets/Timer_Tick.mp3',
+            diceRollSound: 'assets/Dice_Roll.mp3',
+            correctSound: 'assets/Correct_Answer.mp3',
+            wrongSound: 'assets/Wrong_Answer.mp3',
+            moveSound: 'assets/Player_Move.mp3',
+            snakeSound: 'assets/Snake.mp3',
+            ladderSound: 'assets/Ladder.mp3',
+            winSound: 'assets/Wrong_Answer.mp3'
+        }
+    };
+
+    // Game State
+    let gameState = {};
+    let history = [];
+    let historyIndex = -1;
+    const MAX_HISTORY = 10;
+    const MAX_STUCK_TURNS = 4;
+
+    const DEFAULT_QUESTIONS_RAW_CSV = `question,option1,option2,option3,option4,answer,level,group
 "What is the capital of France, a country in Europe?","Berlin","Madrid","Paris","Rome",3,easy,geography
 "What is 8 x 7?","54","56","64","68",2,medium,math
 "Who wrote 'Romeo and Juliet'?","Charles Dickens","Jane Austen","William Shakespeare","Mark Twain",3,hard,literature`;
 
-        function initializeGameState() {
-             gameState = {
-                players: [],
-                currentPlayerIndex: 0,
-                gameStarted: false,
-                masterQuestions: [],
-                availableQuestions: [],
-                usedQuestions: [],
-                allQuestionGroups: [],
-                selectedQuestionGroup: null,
-                csvUploaded: false,
-                logoUploaded: false,
-                soundsUploaded: {},
-                timerDuration: 15,
-                winners: [],
-                soundEnabled: true,
-                volume: 0.5,
-                currentQuestion: null,
-                selectedOption: -1,
-                questionTimer: null,
-                isSubmitting: false
-            };
-        }
+    function initializeGameState() {
+            gameState = {
+            players: [],
+            currentPlayerIndex: 0,
+            gameStarted: false,
+            masterQuestions: [],
+            availableQuestions: [],
+            usedQuestions: [],
+            allQuestionGroups: [],
+            selectedQuestionGroup: null,
+            csvUploaded: false,
+            logoUploaded: false,
+            soundsUploaded: {},
+            timerDuration: 15,
+            winners: [],
+            soundEnabled: true,
+            volume: 0.5,
+            currentQuestion: null,
+            selectedOption: -1,
+            questionTimer: null,
+            isSubmitting: false
+        };
+    }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeGameState();
-            setupNumberOfPlayers();
-            createBoard();
-            setupVolumeControl();
-            setupGameNameInput();
-            updateHistoryButtons();
-            updateHeaderButtons();
-            
-            document.addEventListener('keydown', handleKeyboardShortcuts);
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeGameState();
+        setupNumberOfPlayers();
+        createBoard();
+        setupVolumeControl();
+        setupGameNameInput();
+        updateHistoryButtons();
+        updateHeaderButtons();
+        
+        document.addEventListener('keydown', handleKeyboardShortcuts);
 
-            window.addEventListener('resize', () => {
-                if (gameState.gameStarted) {
-                    drawSnakesAndLadders();
-                }
-            });
+        window.addEventListener('resize', () => {
+            if (gameState.gameStarted) {
+                drawSnakesAndLadders();
+            }
         });
-        
-        function updateHeaderButtons() {
-            const gameIsOver = isGameOver();
-            const gameIsInProgress = gameState.gameStarted && !gameIsOver;
+    });
+    
+    function updateHeaderButtons() {
+        const gameIsOver = isGameOver();
+        const gameIsInProgress = gameState.gameStarted && !gameIsOver;
 
-            document.getElementById('headerStartBtn').disabled = gameState.gameStarted;
-            document.getElementById('headerEndGameBtn').disabled = !gameIsInProgress;
+        document.getElementById('headerStartBtn').disabled = gameState.gameStarted;
+        document.getElementById('headerEndGameBtn').disabled = !gameIsInProgress;
+    }
+
+    function handleKeyboardShortcuts(event) {
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT')) {
+            return;
         }
 
-        function handleKeyboardShortcuts(event) {
-            const activeElement = document.activeElement;
-            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT')) {
-                return;
-            }
+        if (event.key.toLowerCase() === 'pagedown') {
+            event.preventDefault();
+            document.getElementById('rollButton').click();
+            return;
+        }
 
-            if (event.key.toLowerCase() === 'pagedown') {
+        if (event.ctrlKey) {
+            if (event.key.toLowerCase() === 'z') {
                 event.preventDefault();
-                document.getElementById('rollButton').click();
-                return;
+                document.getElementById('undoButton').click();
             }
-
-            if (event.ctrlKey) {
-                if (event.key.toLowerCase() === 'z') {
-                    event.preventDefault();
-                    document.getElementById('undoButton').click();
-                }
-                if (event.key.toLowerCase() === 'y') {
-                    event.preventDefault();
-                    document.getElementById('redoButton').click();
-                }
-            } else if (event.altKey) {
+            if (event.key.toLowerCase() === 'y') {
                 event.preventDefault();
-                switch (event.key.toLowerCase()) {
-                    case 'd':
-                        document.getElementById('rollButton').click();
-                        break;
-                    case 's':
-                        if (document.getElementById('questionPopup').classList.contains('active')) {
-                            document.getElementById('submitButton').click();
+                document.getElementById('redoButton').click();
+            }
+        } else if (event.altKey) {
+            event.preventDefault();
+            switch (event.key.toLowerCase()) {
+                case 'd':
+                    document.getElementById('rollButton').click();
+                    break;
+                case 's':
+                    if (document.getElementById('questionPopup').classList.contains('active')) {
+                        document.getElementById('submitButton').click();
+                    }
+                    break;
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                    if (document.getElementById('questionPopup').classList.contains('active') && !gameState.isSubmitting) {
+                        const optionIndex = parseInt(event.key) - 1;
+                        const options = document.querySelectorAll('#optionsContainer .option');
+                        if (options[optionIndex]) {
+                            selectOption(optionIndex, options[optionIndex]);
+                            submitAnswer();
                         }
-                        break;
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                        if (document.getElementById('questionPopup').classList.contains('active') && !gameState.isSubmitting) {
-                            const optionIndex = parseInt(event.key) - 1;
-                            const options = document.querySelectorAll('#optionsContainer .option');
-                            if (options[optionIndex]) {
-                                selectOption(optionIndex, options[optionIndex]);
-                                submitAnswer();
-                            }
-                        }
-                        break;
-                }
+                    }
+                    break;
             }
         }
+    }
 
-        function deepClone(obj) {
-            return JSON.parse(JSON.stringify(obj));
+    function deepClone(obj) {
+        return JSON.parse(JSON.stringify(obj));
+    }
+
+    function saveStateToHistory() {
+        if (historyIndex < history.length - 1) {
+            history = history.slice(0, historyIndex + 1);
         }
+        history.push(deepClone(gameState));
+        if (history.length > MAX_HISTORY) {
+            history.shift();
+        }
+        historyIndex = history.length - 1;
+        updateHistoryButtons();
+    }
 
-        function saveStateToHistory() {
-            if (historyIndex < history.length - 1) {
-                history = history.slice(0, historyIndex + 1);
-            }
-            history.push(deepClone(gameState));
-            if (history.length > MAX_HISTORY) {
-                history.shift();
-            }
-            historyIndex = history.length - 1;
+    function loadStateFromHistory(index) {
+        if (index >= 0 && index < history.length) {
+            gameState = deepClone(history[index]);
+            historyIndex = index;
+            updateAllUI();
             updateHistoryButtons();
         }
-
-        function loadStateFromHistory(index) {
-            if (index >= 0 && index < history.length) {
-                gameState = deepClone(history[index]);
-                historyIndex = index;
-                updateAllUI();
-                updateHistoryButtons();
-            }
+    }
+    
+    function undoStep() {
+        if (historyIndex > 0) {
+            loadStateFromHistory(historyIndex - 1);
         }
+    }
+
+    function redoStep() {
+        if (historyIndex < history.length - 1) {
+            loadStateFromHistory(historyIndex + 1);
+        }
+    }
+
+    function updateHistoryButtons() {
+        document.getElementById('undoButton').disabled = historyIndex <= 0;
+        document.getElementById('redoButton').disabled = historyIndex >= history.length - 1;
+    }
+
+    function updateAllUI() {
+        updateHeaderButtons();
+        updatePlayersDisplay();
+        updateCurrentPlayerDisplay();
+        updateGameBoard();
+        setTimeout(drawSnakesAndLadders, 50);
         
-        function undoStep() {
-            if (historyIndex > 0) {
-                loadStateFromHistory(historyIndex - 1);
+        const gameIsOver = isGameOver();
+        const rollButtonsDisabled = gameIsOver || !gameState.gameStarted;
+        document.getElementById('rollButton').disabled = rollButtonsDisabled;
+        document.getElementById('skipTurnButton').disabled = rollButtonsDisabled;
+        document.getElementById('winnersSection').style.display = gameIsOver ? 'block' : 'none';
+    }
+
+    function isGameOver() {
+        if (!gameState.gameStarted) return false;
+        const nonWinnersCount = gameState.players.length - gameState.winners.length;
+        const maxWinners = Math.min(3, gameState.players.length > 1 ? gameState.players.length - 1 : 1);
+        return (gameState.winners.length >= maxWinners && maxWinners > 0) || (nonWinnersCount <= 1 && gameState.players.length > 1);
+    }
+    
+    function createBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = '<svg id="svgLayer" class="svg-layer"></svg>';
+        let cells = [];
+        for (let i = 1; i <= BOARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.id = `cell-${i}`;
+            cell.innerHTML = `<span class="cell-number">${i}</span>`;
+            if (SNAKES[i]) {
+                cell.classList.add('snake-start');
+                cell.innerHTML += `<div class="emoji">🐍</div>`;
+            } else if (LADDERS[i]) {
+                cell.classList.add('ladder-start');
+                cell.innerHTML += `<div class="emoji">🪜</div>`;
+            }
+            cells.push(cell);
+        }
+        for (let row = 9; row >= 0; row--) {
+            let rowCells = cells.slice(row * 10, (row + 1) * 10);
+            if (row % 2 !== 0) rowCells.reverse();
+            rowCells.forEach(cell => board.appendChild(cell));
+        }
+    }
+
+    function getCellCenter(cellNumber) {
+        const cell = document.getElementById(`cell-${cellNumber}`);
+        if (!cell) return { x: 0, y: 0 };
+        const board = document.getElementById('gameBoard');
+        const boardRect = board.getBoundingClientRect();
+        const cellRect = cell.getBoundingClientRect();
+        return {
+            x: cellRect.left - boardRect.left + cellRect.width / 2,
+            y: cellRect.top - boardRect.top + cellRect.height / 2
+        };
+    }
+
+    function drawSnakesAndLadders() {
+        const svg = document.getElementById('svgLayer');
+        svg.innerHTML = '';
+        for (const start in LADDERS) {
+            const end = LADDERS[start];
+            const p1 = getCellCenter(start);
+            const p2 = getCellCenter(end);
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            const ladderWidth = 8;
+            const p1_l = { x: p1.x - ladderWidth * Math.sin(angle), y: p1.y + ladderWidth * Math.cos(angle) };
+            const p1_r = { x: p1.x + ladderWidth * Math.sin(angle), y: p1.y - ladderWidth * Math.cos(angle) };
+            const p2_l = { x: p2.x - ladderWidth * Math.sin(angle), y: p2.y + ladderWidth * Math.cos(angle) };
+            const p2_r = { x: p2.x + ladderWidth * Math.sin(angle), y: p2.y - ladderWidth * Math.cos(angle) };
+            svg.innerHTML += `<line x1="${p1_l.x}" y1="${p1_l.y}" x2="${p2_l.x}" y2="${p2_l.y}" class="ladder-side" />`;
+            svg.innerHTML += `<line x1="${p1_r.x}" y1="${p1_r.y}" x2="${p2_r.x}" y2="${p2_r.y}" class="ladder-side" />`;
+            const numRungs = Math.floor(Math.sqrt((p2.x - p1.x)**2 + (p2.y - p1.y)**2) / 20);
+            for (let i = 1; i <= numRungs; i++) {
+                const rung_p1 = { x: p1_l.x + (p2_l.x - p1_l.x) * i / (numRungs + 1), y: p1_l.y + (p2_l.y - p1_l.y) * i / (numRungs + 1) };
+                const rung_p2 = { x: p1_r.x + (p2_r.x - p1_r.x) * i / (numRungs + 1), y: p1_r.y + (p2_r.y - p1_r.y) * i / (numRungs + 1) };
+                svg.innerHTML += `<line x1="${rung_p1.x}" y1="${rung_p1.y}" x2="${rung_p2.x}" y2="${rung_p2.y}" class="ladder-rung" />`;
             }
         }
-
-        function redoStep() {
-            if (historyIndex < history.length - 1) {
-                loadStateFromHistory(historyIndex + 1);
-            }
-        }
-
-        function updateHistoryButtons() {
-            document.getElementById('undoButton').disabled = historyIndex <= 0;
-            document.getElementById('redoButton').disabled = historyIndex >= history.length - 1;
-        }
-
-        function updateAllUI() {
-            updateHeaderButtons();
-            updatePlayersDisplay();
-            updateCurrentPlayerDisplay();
-            updateGameBoard();
-            setTimeout(drawSnakesAndLadders, 50);
+        for (const start in SNAKES) {
+            const end = SNAKES[start];
+            const p1 = getCellCenter(start);
+            const p2 = getCellCenter(end);
+            const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+            const dist = Math.sqrt((p2.x - p1.x)**2 + (p2.y - p1.y)**2);
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            const offset = dist / 4;
+            const control = { x: mid.x + offset * Math.sin(angle), y: mid.y - offset * Math.cos(angle) };
             
-            const gameIsOver = isGameOver();
-            const rollButtonsDisabled = gameIsOver || !gameState.gameStarted;
-            document.getElementById('rollButton').disabled = rollButtonsDisabled;
-            document.getElementById('skipTurnButton').disabled = rollButtonsDisabled;
-            document.getElementById('winnersSection').style.display = gameIsOver ? 'block' : 'none';
+            const pathData = `M ${p1.x} ${p1.y} Q ${control.x} ${control.y} ${p2.x} ${p2.y}`;
+            svg.innerHTML += `<path d="${pathData}" class="snake-outline" />`;
+            svg.innerHTML += `<path d="${pathData}" class="snake-body" />`;
         }
+    }
+    
+    function setupNumberOfPlayers() {
+        document.getElementById('numPlayers').addEventListener('change', (e) => createPlayerNameInputs(parseInt(e.target.value)));
+        createPlayerNameInputs(4);
+    }
 
-        function isGameOver() {
-            if (!gameState.gameStarted) return false;
-            const nonWinnersCount = gameState.players.length - gameState.winners.length;
-            const maxWinners = Math.min(3, gameState.players.length > 1 ? gameState.players.length - 1 : 1);
-            return (gameState.winners.length >= maxWinners && maxWinners > 0) || (nonWinnersCount <= 1 && gameState.players.length > 1);
+    function createPlayerNameInputs(num) {
+        const container = document.getElementById('playerNames');
+        container.innerHTML = '';
+        for (let i = 1; i <= num; i++) {
+            container.innerHTML += `<div class="input-group"><label for="player${i}Name">👤 Player ${i} Name:</label><input type="text" id="player${i}Name" placeholder="Player ${i}" value="Player ${i}"></div>`;
         }
-        
-        function createBoard() {
-            const board = document.getElementById('gameBoard');
-            board.innerHTML = '<svg id="svgLayer" class="svg-layer"></svg>';
-            let cells = [];
-            for (let i = 1; i <= BOARD_SIZE; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.id = `cell-${i}`;
-                cell.innerHTML = `<span class="cell-number">${i}</span>`;
-                if (SNAKES[i]) {
-                    cell.classList.add('snake-start');
-                    cell.innerHTML += `<div class="emoji">🐍</div>`;
-                } else if (LADDERS[i]) {
-                    cell.classList.add('ladder-start');
-                    cell.innerHTML += `<div class="emoji">🪜</div>`;
-                }
-                cells.push(cell);
-            }
-            for (let row = 9; row >= 0; row--) {
-                let rowCells = cells.slice(row * 10, (row + 1) * 10);
-                if (row % 2 !== 0) rowCells.reverse();
-                rowCells.forEach(cell => board.appendChild(cell));
-            }
-        }
-
-        function getCellCenter(cellNumber) {
-            const cell = document.getElementById(`cell-${cellNumber}`);
-            if (!cell) return { x: 0, y: 0 };
-            const board = document.getElementById('gameBoard');
-            const boardRect = board.getBoundingClientRect();
-            const cellRect = cell.getBoundingClientRect();
-            return {
-                x: cellRect.left - boardRect.left + cellRect.width / 2,
-                y: cellRect.top - boardRect.top + cellRect.height / 2
-            };
-        }
-
-        function drawSnakesAndLadders() {
-            const svg = document.getElementById('svgLayer');
-            svg.innerHTML = '';
-            for (const start in LADDERS) {
-                const end = LADDERS[start];
-                const p1 = getCellCenter(start);
-                const p2 = getCellCenter(end);
-                const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                const ladderWidth = 8;
-                const p1_l = { x: p1.x - ladderWidth * Math.sin(angle), y: p1.y + ladderWidth * Math.cos(angle) };
-                const p1_r = { x: p1.x + ladderWidth * Math.sin(angle), y: p1.y - ladderWidth * Math.cos(angle) };
-                const p2_l = { x: p2.x - ladderWidth * Math.sin(angle), y: p2.y + ladderWidth * Math.cos(angle) };
-                const p2_r = { x: p2.x + ladderWidth * Math.sin(angle), y: p2.y - ladderWidth * Math.cos(angle) };
-                svg.innerHTML += `<line x1="${p1_l.x}" y1="${p1_l.y}" x2="${p2_l.x}" y2="${p2_l.y}" class="ladder-side" />`;
-                svg.innerHTML += `<line x1="${p1_r.x}" y1="${p1_r.y}" x2="${p2_r.x}" y2="${p2_r.y}" class="ladder-side" />`;
-                const numRungs = Math.floor(Math.sqrt((p2.x - p1.x)**2 + (p2.y - p1.y)**2) / 20);
-                for (let i = 1; i <= numRungs; i++) {
-                    const rung_p1 = { x: p1_l.x + (p2_l.x - p1_l.x) * i / (numRungs + 1), y: p1_l.y + (p2_l.y - p1_l.y) * i / (numRungs + 1) };
-                    const rung_p2 = { x: p1_r.x + (p2_r.x - p1_r.x) * i / (numRungs + 1), y: p1_r.y + (p2_r.y - p1_r.y) * i / (numRungs + 1) };
-                    svg.innerHTML += `<line x1="${rung_p1.x}" y1="${rung_p1.y}" x2="${rung_p2.x}" y2="${rung_p2.y}" class="ladder-rung" />`;
-                }
-            }
-            for (const start in SNAKES) {
-                const end = SNAKES[start];
-                const p1 = getCellCenter(start);
-                const p2 = getCellCenter(end);
-                const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-                const dist = Math.sqrt((p2.x - p1.x)**2 + (p2.y - p1.y)**2);
-                const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                const offset = dist / 4;
-                const control = { x: mid.x + offset * Math.sin(angle), y: mid.y - offset * Math.cos(angle) };
-                
-                const pathData = `M ${p1.x} ${p1.y} Q ${control.x} ${control.y} ${p2.x} ${p2.y}`;
-                svg.innerHTML += `<path d="${pathData}" class="snake-outline" />`;
-                svg.innerHTML += `<path d="${pathData}" class="snake-body" />`;
-            }
-        }
-        
-        function setupNumberOfPlayers() {
-            document.getElementById('numPlayers').addEventListener('change', (e) => createPlayerNameInputs(parseInt(e.target.value)));
-            createPlayerNameInputs(4);
-        }
-
-        function createPlayerNameInputs(num) {
-            const container = document.getElementById('playerNames');
-            container.innerHTML = '';
-            for (let i = 1; i <= num; i++) {
-                container.innerHTML += `<div class="input-group"><label for="player${i}Name">👤 Player ${i} Name:</label><input type="text" id="player${i}Name" placeholder="Player ${i}" value="Player ${i}"></div>`;
-            }
-        }
-        
-        function setupVolumeControl() {
-            document.getElementById('volumeSlider').addEventListener('input', function() {
-                gameState.volume = this.value / 100;
-                document.getElementById('volumeIcon').textContent = gameState.volume > 0 ? '🔊' : '🔇';
-                updateSoundVolume();
-            });
-        }
-        
-        function handleLogoUpload(event) {
-            const file = event.target.files[0];
-            const label = document.getElementById('logoLabel');
-            if (file && file.type.startsWith("image/")) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const imgSrc = e.target.result;
-                    const headerImg = document.getElementById('gameLogoImg');
-                    headerImg.src = imgSrc;
-                    headerImg.style.display = 'block';
-                    headerImg.parentElement.querySelector('span').style.display = 'none';
-                    const boardImg = document.getElementById('boardLogoImg');
-                    boardImg.src = imgSrc;
-                    boardImg.style.display = 'block';
-                    gameState.logoUploaded = true;
-                    label.textContent = `✅ ${file.name} loaded!`;
-                    label.style.background = '#d4edda';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function setupGameNameInput() {
-            document.getElementById('gameNameInput').addEventListener('input', (e) => {
-                document.getElementById('gameTitle').textContent = e.target.value;
-            });
-        }
-        
-        function handleCsvUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => parseCSV(e.target.result);
-                reader.readAsText(file);
-            }
-        }
-
-        // --- MODIFICATION START ---
-        /**
-         * A more robust CSV row parser that handles commas inside quoted fields.
-         * @param {string} row - A single line from a CSV file.
-         * @returns {string[]} An array of column values.
-         */
-        function parseCsvRow(row) {
-            const parts = [];
-            let currentPart = '';
-            let inQuotes = false;
-            for (let i = 0; i < row.length; i++) {
-                const char = row[i];
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    parts.push(currentPart);
-                    currentPart = '';
-                } else {
-                    currentPart += char;
-                }
-            }
-            parts.push(currentPart);
-            return parts;
-        }
-
-        function parseCSV(csv) {
-            try {
-                const lines = csv.split('\n').filter(line => line.trim() !== '');
-                const questions = [];
-                const groupSet = new Set();
-                
-                for (let i = 1; i < lines.length; i++) { // Start from 1 to skip header
-                    if (!lines[i].trim()) continue; // Skip empty lines
-
-                    // Use the new, robust parser instead of the simple split
-                    const parts = parseCsvRow(lines[i]);
-
-                    // We expect 8 columns: question, 4 options, answer, level, group
-                    if (parts.length >= 8) {
-                        const group = (parts[7] || 'general').trim().toLowerCase();
-                        questions.push({
-                            question: parts[0].trim(),
-                            options: [parts[1].trim(), parts[2].trim(), parts[3].trim(), parts[4].trim()],
-                            answer: parseInt(parts[5].trim()) - 1,
-                            level: parts[6].trim().toLowerCase(),
-                            group: group
-                        });
-                        groupSet.add(group);
-                    } else {
-                        console.warn(`Skipping malformed CSV row ${i + 1}:`, lines[i]);
-                    }
-                }
-
-                if (questions.length > 0) {
-                    gameState.masterQuestions = questions;
-                    gameState.allQuestionGroups = Array.from(groupSet).sort();
-                    gameState.csvUploaded = true;
-                    const label = document.getElementById('csvLabel');
-                    label.innerHTML = `✅ ${questions.length} questions loaded!`;
-                    label.style.background = '#d4edda';
-                    label.style.borderColor = '#28a745';
-                } else { throw new Error("CSV file is empty or has no valid question rows."); }
-            } catch (error) {
-                alert(`Error parsing CSV: ${error.message}`);
-                const label = document.getElementById('csvLabel');
-                label.innerHTML = `❌ Error loading file. Try again.`;
-                label.style.background = '#f8d7da';
-                label.style.borderColor = '#d9534f';
-            }
-        }
-        // --- MODIFICATION END ---
-
-        function handleSoundUpload(event, audioId) {
-            const file = event.target.files[0];
-            const audioEl = document.getElementById(audioId);
-            const labelEl = document.getElementById(event.target.id + 'Label');
-            if (file && audioEl && labelEl) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    audioEl.src = e.target.result;
-                    gameState.soundsUploaded[audioId] = true;
-                    labelEl.textContent = '✅ Loaded';
-                    labelEl.style.backgroundColor = '#d4edda';
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-        
-        async function loadDefaultAssets() {
-            if (!gameState.logoUploaded) {
-                const imgSrc = DEFAULT_ASSETS.logo;
+    }
+    
+    function setupVolumeControl() {
+        document.getElementById('volumeSlider').addEventListener('input', function() {
+            gameState.volume = this.value / 100;
+            document.getElementById('volumeIcon').textContent = gameState.volume > 0 ? '🔊' : '🔇';
+            updateSoundVolume();
+        });
+    }
+    
+    function handleLogoUpload(event) {
+        const file = event.target.files[0];
+        const label = document.getElementById('logoLabel');
+        if (file && file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imgSrc = e.target.result;
                 const headerImg = document.getElementById('gameLogoImg');
                 headerImg.src = imgSrc;
                 headerImg.style.display = 'block';
@@ -424,472 +460,621 @@
                 const boardImg = document.getElementById('boardLogoImg');
                 boardImg.src = imgSrc;
                 boardImg.style.display = 'block';
-                document.getElementById('logoLabel').textContent = `✅ Default logo loaded!`;
-            }
-
-            if (!gameState.csvUploaded) {
-                try {
-                    const response = await fetch(DEFAULT_ASSETS.questions);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const csvText = await response.text();
-                    parseCSV(csvText);
-                    document.getElementById('csvLabel').innerHTML = `✅ Default questions loaded!`;
-                } catch (error) {
-                    console.error('Could not load default questions.csv:', error);
-                    alert('Could not load default questions.csv. Using built-in fallback questions.');
-                    parseCSV(DEFAULT_QUESTIONS_RAW_CSV);
-                }
-            }
-
-            for (const soundId in DEFAULT_ASSETS.sounds) {
-                if (!gameState.soundsUploaded[soundId]) {
-                    const audioEl = document.getElementById(soundId);
-                    audioEl.src = DEFAULT_ASSETS.sounds[soundId];
-                    const labelEl = document.getElementById(soundId + 'Label');
-                    if (labelEl) {
-                        labelEl.textContent = '✅ Default';
-                        labelEl.style.backgroundColor = '#e9ecef';
-                    }
-                }
-            }
+                gameState.logoUploaded = true;
+                label.textContent = `✅ ${file.name} loaded!`;
+                label.style.background = '#d4edda';
+            };
+            reader.readAsDataURL(file);
         }
+    }
 
-        async function initializeAndPrepareGame() {
-            initializeGameState();
+    function setupGameNameInput() {
+        document.getElementById('gameNameInput').addEventListener('input', (e) => {
+            document.getElementById('gameTitle').textContent = e.target.value;
+        });
+    }
+    
+    function handleCsvUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => parseCSV(e.target.result);
+            reader.readAsText(file);
+        }
+    }
+
+    function parseCsvRow(row) {
+        const parts = [];
+        let currentPart = '';
+        let inQuotes = false;
+        for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            const nextChar = row[i + 1];
             
-            await loadDefaultAssets();
-            
-            const numPlayers = parseInt(document.getElementById('numPlayers').value);
-            gameState.players = Array.from({ length: numPlayers }, (_, i) => ({
-                name: document.getElementById(`player${i + 1}Name`).value || `Player ${i + 1}`,
-                position: 0,
-                stuckCounter: 0, 
-                color: `player-${i + 1}`
-            }));
-            gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
-            
-            if (gameState.allQuestionGroups.length > 1) {
-                populateAndShowGroupSelector();
+            if (char === '"' && inQuotes && nextChar === '"') {
+                // Handle escaped double quote ""
+                currentPart += '"';
+                i++; // Skip next quote
+            } else if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                parts.push(currentPart);
+                currentPart = '';
             } else {
-                gameState.selectedQuestionGroup = gameState.allQuestionGroups[0] || 'general';
-                finalizeGameStart();
+                currentPart += char;
             }
         }
+        parts.push(currentPart);
+        return parts;
+    }
 
-        function populateAndShowGroupSelector() {
-            const container = document.getElementById('groupOptionsContainer');
-            container.innerHTML = '';
-            gameState.allQuestionGroups.forEach(group => {
-                const btn = document.createElement('div');
-                btn.className = 'group-option';
-                btn.textContent = group;
-                btn.onclick = () => selectGroup(group, btn);
-                container.appendChild(btn);
-            });
-            document.getElementById('groupSelectionPopup').classList.add('active');
-        }
-
-        function selectGroup(groupName, element) {
-            gameState.selectedQuestionGroup = groupName;
-            document.querySelectorAll('.group-option').forEach(opt => opt.classList.remove('selected'));
-            element.classList.add('selected');
-            document.getElementById('finalizeStartBtn').disabled = false;
-        }
-        
-        function finalizeGameStart() {
-            if (!gameState.selectedQuestionGroup) {
-                alert("Please select a question group to start.");
-                return;
-            }
+    function parseCSV(csv) {
+        try {
+            const lines = csv.split(/[\r\n]+/).filter(line => line.trim() !== '');
+            const questions = [];
+            const groupSet = new Set();
             
-            document.getElementById('groupSelectionPopup').classList.remove('active');
-            
-            gameState.availableQuestions = gameState.masterQuestions.filter(q => q.group === gameState.selectedQuestionGroup);
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
 
-            if (gameState.availableQuestions.length === 0) {
-                alert(`Error: No questions found for the selected group "${gameState.selectedQuestionGroup}". Please check your CSV file.`);
-                resetGame();
-                return;
-            }
-            
-            gameState.gameStarted = true;
-            document.getElementById('setupSection').classList.remove('active');
-            document.getElementById('gameSection').classList.add('active');
-            
-            history = [];
-            historyIndex = -1;
-            saveStateToHistory(); 
+                const parts = parseCsvRow(lines[i]);
 
-            updateAllUI();
-        }
-        
-        function startGame() {
-            const popup = document.getElementById('guidelinePopup');
-            const frame = document.getElementById('guidelineFrame');
-            frame.src = 'assets/Game-Guidelines.pdf'; 
-            popup.classList.add('active');
-        }
-
-        async function closeGuidelinesAndStart() {
-            document.getElementById('guidelinePopup').classList.remove('active');
-            await initializeAndPrepareGame();
-        }
-        
-        function updatePlayersDisplay() {
-            const list = document.getElementById('playersList');
-            list.innerHTML = gameState.players.map(p => {
-                const colors = { 'player-1':'#e74c3c', 'player-2':'#3498db', 'player-3':'#2ecc71', 'player-4':'#f1c40f', 'player-5':'#9b59b6', 'player-6':'#1abc9c'};
-                const positionText = gameState.winners.find(w => w.name === p.name) ? 'Finished' : (p.position || 'Start');
-                return `
-                <div class="player-item">
-                    <span style="display:inline-block;width:20px;height:20px;border-radius:50%;background-color:${colors[p.color]};margin-right:10px;"></span>
-                    <span>${p.name}</span>
-                    <span>Pos: ${positionText}</span>
-                </div>`}).join('');
-        }
-        
-        function updateCurrentPlayerDisplay() {
-            if (gameState.players.length === 0 || isGameOver()) return;
-            const player = gameState.players[gameState.currentPlayerIndex];
-            const display = document.getElementById('currentPlayerDisplay');
-            display.textContent = `${player.name}'s Turn`;
-            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
-            display.style.background = `linear-gradient(135deg, ${colors[gameState.currentPlayerIndex % colors.length]}, ${colors[(gameState.currentPlayerIndex + 1) % colors.length]})`;
-        }
-
-        function updateGameBoard() {
-            document.querySelectorAll('.player').forEach(p => p.remove());
-            gameState.players.forEach((player, index) => {
-                if (player.position > 0 && !gameState.winners.find(w => w.name === player.name)) {
-                    const cell = document.getElementById(`cell-${player.position}`);
-                    if (cell) {
-                        const playerEl = document.createElement('div');
-                        playerEl.className = `player ${player.color}`;
-                        playerEl.textContent = index + 1;
-                        const existingPlayers = cell.querySelectorAll('.player').length;
-                        playerEl.style.transform = `translate(${existingPlayers * 5}px, -${existingPlayers * 5}px)`;
-                        cell.appendChild(playerEl);
-                    }
+                if (parts.length >= 8) {
+                    const group = (parts[7] || 'general').trim().toLowerCase();
+                    questions.push({
+                        question: parts[0].trim(),
+                        options: [parts[1].trim(), parts[2].trim(), parts[3].trim(), parts[4].trim()],
+                        answer: parseInt(parts[5].trim()) - 1,
+                        level: parts[6].trim().toLowerCase(),
+                        group: group
+                    });
+                    if (group) groupSet.add(group);
+                } else {
+                    console.warn(`Skipping malformed CSV row ${i + 1}:`, lines[i]);
                 }
-            });
+            }
+
+            if (questions.length > 0) {
+                gameState.masterQuestions = questions;
+                gameState.allQuestionGroups = Array.from(groupSet).sort();
+                gameState.csvUploaded = true;
+                const label = document.getElementById('csvLabel');
+                label.innerHTML = `✅ ${questions.length} questions loaded!`;
+                label.style.background = '#d4edda';
+                label.style.borderColor = '#28a745';
+            } else { throw new Error("CSV file is empty or has no valid question rows."); }
+        } catch (error) {
+            alert(`Error parsing CSV: ${error.message}`);
+            const label = document.getElementById('csvLabel');
+            label.innerHTML = `❌ Error loading file. Try again.`;
+            label.style.background = '#f8d7da';
+            label.style.borderColor = '#d9534f';
+        }
+    }
+
+    function handleSoundUpload(event, audioId) {
+        const file = event.target.files[0];
+        const audioEl = document.getElementById(audioId);
+        const labelEl = document.getElementById(event.target.id + 'Label');
+        if (file && audioEl && labelEl) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                audioEl.src = e.target.result;
+                gameState.soundsUploaded[audioId] = true;
+                labelEl.textContent = '✅ Loaded';
+                labelEl.style.backgroundColor = '#d4edda';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    async function loadDefaultAssets() {
+        if (!gameState.logoUploaded) {
+            try {
+                // Check if the asset exists before trying to load it
+                const response = await fetch(DEFAULT_ASSETS.logo, { method: 'HEAD' });
+                if (response.ok) {
+                    const imgSrc = DEFAULT_ASSETS.logo;
+                    const headerImg = document.getElementById('gameLogoImg');
+                    headerImg.src = imgSrc;
+                    headerImg.style.display = 'block';
+                    headerImg.parentElement.querySelector('span').style.display = 'none';
+                    const boardImg = document.getElementById('boardLogoImg');
+                    boardImg.src = imgSrc;
+                    boardImg.style.display = 'block';
+                    document.getElementById('logoLabel').textContent = `✅ Default logo loaded!`;
+                }
+            } catch (e) { console.warn("Default logo not found. Skipping."); }
         }
 
-        function skipTurn() {
-            if (isGameOver() || document.getElementById('rollButton').disabled) return;
-            
-            nextPlayer();
-            updateAllUI();
-            saveStateToHistory();
+        if (!gameState.csvUploaded) {
+            try {
+                const response = await fetch(DEFAULT_ASSETS.questions);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const csvText = await response.text();
+                parseCSV(csvText);
+                document.getElementById('csvLabel').innerHTML = `✅ Default questions loaded!`;
+            } catch (error) {
+                console.error('Could not load default questions.csv:', error);
+                alert('Could not load default questions.csv. Using built-in fallback questions.');
+                parseCSV(DEFAULT_QUESTIONS_RAW_CSV);
+            }
+        }
+
+        for (const soundId in DEFAULT_ASSETS.sounds) {
+            if (!gameState.soundsUploaded[soundId]) {
+                const audioEl = document.getElementById(soundId);
+                audioEl.src = DEFAULT_ASSETS.sounds[soundId];
+                const labelEl = document.getElementById(soundId + 'Label');
+                if (labelEl) {
+                    labelEl.textContent = '✅ Default';
+                    labelEl.style.backgroundColor = '#e9ecef';
+                }
+            }
+        }
+    }
+
+    // --- MODIFICATION: New game flow functions ---
+    async function beginGameSetup() {
+        initializeGameState();
+        
+        await loadDefaultAssets();
+        
+        const numPlayers = parseInt(document.getElementById('numPlayers').value);
+        gameState.players = Array.from({ length: numPlayers }, (_, i) => ({
+            name: document.getElementById(`player${i + 1}Name`).value || `Player ${i + 1}`,
+            position: 0,
+            stuckCounter: 0, 
+            color: `player-${i + 1}`
+        }));
+        gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
+        
+        if (gameState.allQuestionGroups.length > 1) {
+            populateAndShowGroupSelector();
+        } else {
+            gameState.selectedQuestionGroup = gameState.allQuestionGroups[0] || 'general';
+            finalizeGameStart();
+        }
+    }
+
+    function showGuidelines() {
+        const popup = document.getElementById('guidelinePopup');
+        const frame = document.getElementById('guidelineFrame');
+        if (frame.src === "") {
+             frame.src = 'assets/Game-Guidelines.pdf'; 
+        }
+        popup.classList.add('active');
+    }
+
+    function closeGuidelines() {
+        document.getElementById('guidelinePopup').classList.remove('active');
+    }
+    // --- END MODIFICATION ---
+
+    function populateAndShowGroupSelector() {
+        const container = document.getElementById('groupOptionsContainer');
+        container.innerHTML = '';
+        gameState.allQuestionGroups.forEach(group => {
+            const btn = document.createElement('div');
+            btn.className = 'group-option';
+            btn.textContent = group;
+            btn.onclick = () => selectGroup(group, btn);
+            container.appendChild(btn);
+        });
+        document.getElementById('groupSelectionPopup').classList.add('active');
+    }
+
+    function selectGroup(groupName, element) {
+        gameState.selectedQuestionGroup = groupName;
+        document.querySelectorAll('.group-option').forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        document.getElementById('finalizeStartBtn').disabled = false;
+    }
+    
+    function finalizeGameStart() {
+        if (!gameState.selectedQuestionGroup) {
+            alert("Please select a question group to start.");
+            return;
         }
         
-        function rollDice() {
-            if (!gameState.gameStarted || document.getElementById('rollButton').disabled) return;
-            
-            const dicePopup = document.getElementById('dicePopup');
-            const dicePopupContent = document.getElementById('dicePopupContent');
-            const sideBarDice = document.getElementById('dice');
-            const rollButton = document.getElementById('rollButton');
-            const skipTurnButton = document.getElementById('skipTurnButton');
+        document.getElementById('groupSelectionPopup').classList.remove('active');
+        
+        // This is the initial setup. All questions for the group go into `availableQuestions`.
+        gameState.availableQuestions = gameState.masterQuestions.filter(q => q.group === gameState.selectedQuestionGroup);
+        gameState.usedQuestions = []; // Ensure the used pool is empty
 
-            rollButton.disabled = true;
-            skipTurnButton.disabled = true;
-
-            dicePopup.classList.add('active');
-            dicePopupContent.classList.add('rolling');
-            playSound('diceRollSound');
-
-            const player = gameState.players[gameState.currentPlayerIndex];
-            let forcedRoll = 0;
-            if (player.stuckCounter >= MAX_STUCK_TURNS && player.position > (BOARD_SIZE - 6)) {
-                forcedRoll = BOARD_SIZE - player.position;
-            }
-
-            let rollCount = 0;
-            const rollInterval = setInterval(() => {
-                const randomFace = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][Math.floor(Math.random() * 6)];
-                dicePopupContent.textContent = randomFace;
-                sideBarDice.textContent = randomFace;
-
-                if (++rollCount > 10) {
-                    clearInterval(rollInterval);
-                    const finalRoll = (forcedRoll > 0) ? forcedRoll : Math.floor(Math.random() * 6) + 1;
-                    const finalFace = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][finalRoll - 1];
-                    
-                    dicePopupContent.textContent = finalFace;
-                    sideBarDice.textContent = finalFace;
-                    dicePopupContent.classList.remove('rolling');
-
-                    setTimeout(() => {
-                        dicePopup.classList.remove('active');
-                        setTimeout(() => showQuestion(finalRoll), 300);
-                    }, 1000);
-                }
-            }, 100);
+        if (gameState.availableQuestions.length === 0) {
+            alert(`Error: No questions found for the selected group "${gameState.selectedQuestionGroup}". Please check your CSV file.`);
+            resetGame();
+            return;
         }
         
-        function showQuestion(diceRoll) {
-            if (gameState.availableQuestions.length === 0) {
-                if (gameState.usedQuestions.length === 0) {
-                    alert(`FATAL ERROR: No more questions available for group "${gameState.selectedQuestionGroup}". Game cannot continue.`);
-                    forceEndGame();
-                    return;
-                }
-                gameState.availableQuestions = [...gameState.usedQuestions];
-                gameState.usedQuestions = [];
-            }
-            
-            const level = diceRoll <= 2 ? 'easy' : (diceRoll <= 4 ? 'medium' : 'hard');
-            let pool = gameState.availableQuestions.filter(q => q.level === level);
-            if (pool.length === 0) pool = gameState.availableQuestions; 
-
-            const questionIndexInPool = Math.floor(Math.random() * pool.length);
-            const question = pool[questionIndexInPool];
-            
-            gameState.currentQuestion = question;
-            gameState.selectedOption = -1;
-            
-            document.getElementById('questionPopup').dataset.diceRoll = diceRoll;
-            document.getElementById('questionText').textContent = gameState.currentQuestion.question;
-            const optionsContainer = document.getElementById('optionsContainer');
-            optionsContainer.innerHTML = '';
-            gameState.currentQuestion.options.forEach((opt, i) => {
-                const optEl = document.createElement('div');
-                optEl.className = 'option';
-                optEl.textContent = `${i + 1}. ${opt}`;
-                optEl.onclick = () => selectOption(i, optEl);
-                optionsContainer.appendChild(optEl);
-            });
-            document.getElementById('questionPopup').classList.add('active');
-            startQuestionTimer();
-        }
-
-        function startQuestionTimer() {
-            let timeLeft = gameState.timerDuration;
-            const timerEl = document.getElementById('questionTimer');
-            timerEl.classList.remove('warning');
-            clearInterval(gameState.questionTimer);
-            gameState.questionTimer = setInterval(() => {
-                timerEl.textContent = timeLeft;
-                playSound('timerTickSound');
-                if (timeLeft <= 5 && !timerEl.classList.contains('warning')) timerEl.classList.add('warning');
-                if (--timeLeft < 0) {
-                    clearInterval(gameState.questionTimer);
-                    submitAnswer();
-                }
-            }, 1000);
-        }
-
-        function selectOption(index, el) {
-            if (gameState.isSubmitting) return; 
-            document.querySelectorAll('.option.selected').forEach(opt => opt.classList.remove('selected'));
-            el.classList.add('selected');
-            gameState.selectedOption = index;
-        }
-
-        function submitAnswer() {
-            if (gameState.isSubmitting) return;
-            gameState.isSubmitting = true;
-
-            const timerTickAudio = document.getElementById('timerTickSound');
-            if (timerTickAudio) {
-                timerTickAudio.pause();
-                timerTickAudio.currentTime = 0;
-            }
-
-            clearInterval(gameState.questionTimer);
-            const isCorrect = gameState.selectedOption === gameState.currentQuestion.answer;
-            const diceRoll = parseInt(document.getElementById('questionPopup').dataset.diceRoll, 10);
-            
-            const questionIndex = gameState.availableQuestions.findIndex(q => q.question === gameState.currentQuestion.question);
-            if (questionIndex > -1) {
-                const [usedQuestion] = gameState.availableQuestions.splice(questionIndex, 1);
-                gameState.usedQuestions.push(usedQuestion);
-            }
-
-            document.querySelectorAll('.option').forEach((opt, i) => {
-                if (i === gameState.currentQuestion.answer) opt.classList.add('correct');
-                else if (i === gameState.selectedOption) opt.classList.add('wrong');
-            });
-
-            setTimeout(() => {
-                document.getElementById('questionPopup').classList.remove('active');
-                if (isCorrect) playSound('correctSound');
-                else playSound('wrongSound');
-                handleMove(diceRoll, isCorrect);
-                gameState.isSubmitting = false; 
-            }, 2000);
-        }
+        gameState.gameStarted = true;
+        document.getElementById('setupSection').classList.remove('active');
+        document.getElementById('gameSection').classList.add('active');
         
-        function finishTurn() {
-            updateAllUI();
-            if (isGameOver()) {
-                 endGame();
-            } else {
-                nextPlayer();
-                if (!isGameOver()) {
-                    document.getElementById('rollButton').disabled = false;
-                    document.getElementById('skipTurnButton').disabled = false;
+        history = [];
+        historyIndex = -1;
+        saveStateToHistory(); 
+
+        updateAllUI();
+    }
+    
+    function updatePlayersDisplay() {
+        const list = document.getElementById('playersList');
+        list.innerHTML = gameState.players.map(p => {
+            const colors = { 'player-1':'#e74c3c', 'player-2':'#3498db', 'player-3':'#2ecc71', 'player-4':'#f1c40f', 'player-5':'#9b59b6', 'player-6':'#1abc9c'};
+            const positionText = gameState.winners.find(w => w.name === p.name) ? 'Finished' : (p.position || 'Start');
+            return `
+            <div class="player-item">
+                <span style="display:inline-block;width:20px;height:20px;border-radius:50%;background-color:${colors[p.color]};margin-right:10px;"></span>
+                <span>${p.name}</span>
+                <span>Pos: ${positionText}</span>
+            </div>`}).join('');
+    }
+    
+    function updateCurrentPlayerDisplay() {
+        if (gameState.players.length === 0 || isGameOver()) return;
+        const player = gameState.players[gameState.currentPlayerIndex];
+        const display = document.getElementById('currentPlayerDisplay');
+        display.textContent = `${player.name}'s Turn`;
+        const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
+        display.style.background = `linear-gradient(135deg, ${colors[gameState.currentPlayerIndex % colors.length]}, ${colors[(gameState.currentPlayerIndex + 1) % colors.length]})`;
+    }
+
+    function updateGameBoard() {
+        document.querySelectorAll('.player').forEach(p => p.remove());
+        gameState.players.forEach((player, index) => {
+            if (player.position > 0 && !gameState.winners.find(w => w.name === player.name)) {
+                const cell = document.getElementById(`cell-${player.position}`);
+                if (cell) {
+                    const playerEl = document.createElement('div');
+                    playerEl.className = `player ${player.color}`;
+                    playerEl.textContent = index + 1;
+                    const existingPlayers = cell.querySelectorAll('.player').length;
+                    playerEl.style.transform = `translate(${existingPlayers * 5}px, -${existingPlayers * 5}px)`;
+                    cell.appendChild(playerEl);
                 }
-                saveStateToHistory();
             }
+        });
+    }
+
+    function skipTurn() {
+        if (isGameOver() || document.getElementById('rollButton').disabled) return;
+        
+        nextPlayer();
+        updateAllUI();
+        saveStateToHistory();
+    }
+    
+    function rollDice() {
+        if (!gameState.gameStarted || document.getElementById('rollButton').disabled) return;
+        
+        const dicePopup = document.getElementById('dicePopup');
+        const dicePopupContent = document.getElementById('dicePopupContent');
+        const sideBarDice = document.getElementById('dice');
+        const rollButton = document.getElementById('rollButton');
+        const skipTurnButton = document.getElementById('skipTurnButton');
+
+        rollButton.disabled = true;
+        skipTurnButton.disabled = true;
+
+        dicePopup.classList.add('active');
+        dicePopupContent.classList.add('rolling');
+        playSound('diceRollSound');
+
+        const player = gameState.players[gameState.currentPlayerIndex];
+        let forcedRoll = 0;
+        if (player.stuckCounter >= MAX_STUCK_TURNS && player.position > (BOARD_SIZE - 6)) {
+            forcedRoll = BOARD_SIZE - player.position;
         }
 
-        function handleMove(steps, isCorrect) {
-            const player = gameState.players[gameState.currentPlayerIndex];
-            const oldPosition = player.position;
+        let rollCount = 0;
+        const rollInterval = setInterval(() => {
+            const randomFace = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][Math.floor(Math.random() * 6)];
+            dicePopupContent.textContent = randomFace;
+            sideBarDice.textContent = randomFace;
 
-            if (isCorrect) {
-                const newPosition = oldPosition + steps;
+            if (++rollCount > 10) {
+                clearInterval(rollInterval);
+                const finalRoll = (forcedRoll > 0) ? forcedRoll : Math.floor(Math.random() * 6) + 1;
+                const finalFace = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][finalRoll - 1];
                 
-                if (newPosition > BOARD_SIZE) {
-                    player.stuckCounter++; 
-                    finishTurn(); 
-                    return;
-                }
-
-                player.position = newPosition;
-                player.stuckCounter = 0; 
-                updateGameBoard();
-                playSound('moveSound');
+                dicePopupContent.textContent = finalFace;
+                sideBarDice.textContent = finalFace;
+                dicePopupContent.classList.remove('rolling');
 
                 setTimeout(() => {
-                    if (LADDERS[player.position]) {
-                        player.position = LADDERS[player.position];
-                        playSound('ladderSound');
-                    }
-
-                    if (player.position === 100 && !gameState.winners.some(w => w.name === player.name)) {
-                        gameState.winners.push(player);
-                        playSound('winSound');
-                    }
-                    finishTurn();
-                }, 600);
-
+                    dicePopup.classList.remove('active');
+                    setTimeout(() => showQuestion(finalRoll), 300);
+                }, 1000);
+            }
+        }, 100);
+    }
+    
+    // --- MODIFICATION: Corrected question selection and repetition logic ---
+    function showQuestion(diceRoll) {
+        // Step 1: Check if any questions are left at all.
+        if (gameState.availableQuestions.length === 0) {
+            // If the available pool is empty, check if we have used questions to refill from.
+            if (gameState.usedQuestions.length > 0) {
+                console.log("All questions used. Reshuffling the deck.");
+                gameState.availableQuestions = [...gameState.usedQuestions];
+                gameState.usedQuestions = [];
             } else {
-                const potentialPosition = oldPosition + steps;
-                
-                if (SNAKES[potentialPosition] && potentialPosition <= BOARD_SIZE) {
-                    player.position = potentialPosition;
-                    updateGameBoard();
-                    playSound('moveSound');
-                    
-                    setTimeout(() => {
-                        player.position = SNAKES[potentialPosition];
-                        playSound('snakeSound');
-                        finishTurn();
-                    }, 600);
-                } else {
-                    finishTurn();
-                }
+                // This is a fatal error: no questions were ever loaded, or they've all vanished.
+                alert(`FATAL ERROR: No more questions available for group "${gameState.selectedQuestionGroup}". Game cannot continue.`);
+                forceEndGame();
+                return;
             }
         }
         
-        function nextPlayer() {
-            do {
-                gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-            } while (gameState.winners.some(p => p.name === gameState.players[gameState.currentPlayerIndex].name) && !isGameOver());
-            
-            updateCurrentPlayerDisplay();
-        }
-        
-        function endGame() {
-            const list = document.getElementById('winnersList');
-            const remainingPlayers = gameState.players
-                .filter(p => !gameState.winners.some(w => w.name === p.name))
-                .sort((a, b) => b.position - a.position);
-            const finalRanking = [...gameState.winners, ...remainingPlayers];
+        // Step 2: Try to find a question of the appropriate difficulty level from the available pool.
+        const level = diceRoll <= 2 ? 'easy' : (diceRoll <= 4 ? 'medium' : 'hard');
+        let pool = gameState.availableQuestions.filter(q => q.level === level);
 
-            list.innerHTML = finalRanking.map((p, i) => {
-                const rankText = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
-                return `<div class="winner-item"><span>${rankText} ${p.name}</span></div>`;
-            }).join('');
-            
-            document.getElementById('winnersSection').style.display = 'block';
-            document.getElementById('rollButton').disabled = true;
-            document.getElementById('skipTurnButton').disabled = true;
-            document.getElementById('currentPlayerDisplay').textContent = "Game Over!";
-            updateHeaderButtons();
-            saveStateToHistory(); 
+        // Step 3: If no questions of that difficulty are left, use any remaining available question.
+        // This prevents the game from stopping if you run out of, say, 'hard' questions
+        // but still have 'easy' ones left.
+        if (pool.length === 0) {
+            console.warn(`No questions of level '${level}' available. Picking from any remaining level.`);
+            pool = gameState.availableQuestions;
         }
-        
-        function forceEndGame() {
-            if (!gameState.gameStarted || isGameOver()) return;
-            if (confirm('Are you sure you want to end the game and declare winners now?')) {
-                endGame();
-            }
-        }
-        
-        function resetGame() {
-            if (gameState.gameStarted && !isGameOver()) {
-                if (!confirm('Are you sure you want to end the current game and start a new one?')) {
-                    return;
-                }
-            }
-            
-            initializeGameState();
-            
-            const headerImg = document.getElementById('gameLogoImg');
-            headerImg.src = '';
-            headerImg.style.display = 'none';
-            headerImg.parentElement.querySelector('span').style.display = 'inline';
-            const boardImg = document.getElementById('boardLogoImg');
-            boardImg.src = '';
-            boardImg.style.display = 'none';
-            document.getElementById('logoUpload').value = "";
-            document.getElementById('logoLabel').innerHTML = `📁 Click to upload Logo`;
-            document.getElementById('logoLabel').style.background = '#ecf0f1';
-            
-            document.getElementById('gameSection').classList.remove('active');
-            document.getElementById('setupSection').classList.add('active');
-            document.getElementById('winnersSection').style.display = 'none';
-            document.getElementById('dice').textContent = '🎲';
-            document.getElementById('rollButton').disabled = false;
-            document.getElementById('skipTurnButton').disabled = false;
-            document.getElementById('svgLayer').innerHTML = '';
-            
-            const csvLabel = document.getElementById('csvLabel');
-            csvLabel.innerHTML = `📁 Click to upload CSV<br><small>Format: q,o1,o2,o3,o4,ans,lvl,group</small>`;
-            csvLabel.style.background = '#ecf0f1';
-            csvLabel.style.borderColor = '#bdc3c7';
-            document.getElementById('csvUpload').value = "";
 
-            document.querySelectorAll('.sound-upload-label').forEach(label => {
-                label.textContent = 'Select file...';
-                label.style.backgroundColor = '#ecf0f1';
-            });
-            document.querySelectorAll('.sound-effects audio').forEach(audio => { audio.src = ''; });
+        // Step 4: Select a random question from the determined pool.
+        const questionIndexInPool = Math.floor(Math.random() * pool.length);
+        const question = pool[questionIndexInPool];
+        
+        // The rest of the function remains the same.
+        gameState.currentQuestion = question;
+        gameState.selectedOption = -1;
+        
+        document.getElementById('questionPopup').dataset.diceRoll = diceRoll;
+        document.getElementById('questionText').textContent = gameState.currentQuestion.question;
+        const optionsContainer = document.getElementById('optionsContainer');
+        optionsContainer.innerHTML = '';
+        gameState.currentQuestion.options.forEach((opt, i) => {
+            const optEl = document.createElement('div');
+            optEl.className = 'option';
+            optEl.textContent = `${i + 1}. ${opt}`;
+            optEl.onclick = () => selectOption(i, optEl);
+            optionsContainer.appendChild(optEl);
+        });
+        document.getElementById('questionPopup').classList.add('active');
+        startQuestionTimer();
+    }
+    // --- END MODIFICATION ---
 
-            history = [];
-            historyIndex = -1;
-            updateHistoryButtons();
-            updateHeaderButtons();
-            createBoard();
-        }
-        
-        function playSound(soundId) {
-            if (gameState.soundEnabled) {
-                const audio = document.getElementById(soundId);
-                if (audio && audio.src) {
-                    audio.volume = gameState.volume;
-                    audio.currentTime = 0;
-                    audio.play().catch(e => {});
-                }
+    function startQuestionTimer() {
+        let timeLeft = gameState.timerDuration;
+        const timerEl = document.getElementById('questionTimer');
+        timerEl.classList.remove('warning');
+        clearInterval(gameState.questionTimer);
+        gameState.questionTimer = setInterval(() => {
+            timerEl.textContent = timeLeft;
+            playSound('timerTickSound');
+            if (timeLeft <= 5 && !timerEl.classList.contains('warning')) timerEl.classList.add('warning');
+            if (--timeLeft < 0) {
+                clearInterval(gameState.questionTimer);
+                submitAnswer();
             }
+        }, 1000);
+    }
+
+    function selectOption(index, el) {
+        if (gameState.isSubmitting) return; 
+        document.querySelectorAll('.option.selected').forEach(opt => opt.classList.remove('selected'));
+        el.classList.add('selected');
+        gameState.selectedOption = index;
+    }
+
+    function submitAnswer() {
+        if (gameState.isSubmitting) return;
+        gameState.isSubmitting = true;
+
+        const timerTickAudio = document.getElementById('timerTickSound');
+        if (timerTickAudio) {
+            timerTickAudio.pause();
+            timerTickAudio.currentTime = 0;
         }
+
+        clearInterval(gameState.questionTimer);
+        const isCorrect = gameState.selectedOption === gameState.currentQuestion.answer;
+        const diceRoll = parseInt(document.getElementById('questionPopup').dataset.diceRoll, 10);
         
-        function updateSoundVolume() {
-            document.querySelectorAll('audio').forEach(audio => audio.volume = gameState.volume);
+        // This logic correctly moves the question from `available` to `used`, preventing immediate repeats.
+        const questionIndex = gameState.availableQuestions.findIndex(q => q.question === gameState.currentQuestion.question);
+        if (questionIndex > -1) {
+            const [usedQuestion] = gameState.availableQuestions.splice(questionIndex, 1);
+            gameState.usedQuestions.push(usedQuestion);
         }
-        
-        function toggleFullscreen() {
-            const el = document.getElementById('gameContainer');
-            if (!document.fullscreenElement) el.requestFullscreen().catch(err => console.error(err));
-            else document.exitFullscreen();
-        }
-        
-        document.addEventListener('fullscreenchange', () => {
-            const btn = document.getElementById('headerFullscreenBtn');
-            btn.textContent = document.fullscreenElement ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+
+        document.querySelectorAll('.option').forEach((opt, i) => {
+            if (i === gameState.currentQuestion.answer) opt.classList.add('correct');
+            else if (i === gameState.selectedOption) opt.classList.add('wrong');
         });
 
+        setTimeout(() => {
+            document.getElementById('questionPopup').classList.remove('active');
+            if (isCorrect) playSound('correctSound');
+            else playSound('wrongSound');
+            handleMove(diceRoll, isCorrect);
+            gameState.isSubmitting = false; 
+        }, 2000);
+    }
+    
+    function finishTurn() {
+        updateAllUI();
+        if (isGameOver()) {
+                endGame();
+        } else {
+            nextPlayer();
+            if (!isGameOver()) {
+                document.getElementById('rollButton').disabled = false;
+                document.getElementById('skipTurnButton').disabled = false;
+            }
+            saveStateToHistory();
+        }
+    }
+
+    function handleMove(steps, isCorrect) {
+        const player = gameState.players[gameState.currentPlayerIndex];
+        const oldPosition = player.position;
+
+        if (isCorrect) {
+            const newPosition = oldPosition + steps;
+            
+            if (newPosition > BOARD_SIZE) {
+                player.stuckCounter++; 
+                finishTurn(); 
+                return;
+            }
+
+            player.position = newPosition;
+            player.stuckCounter = 0; 
+            updateGameBoard();
+            playSound('moveSound');
+
+            setTimeout(() => {
+                if (LADDERS[player.position]) {
+                    player.position = LADDERS[player.position];
+                    playSound('ladderSound');
+                }
+
+                if (player.position === 100 && !gameState.winners.some(w => w.name === player.name)) {
+                    gameState.winners.push(player);
+                    playSound('winSound');
+                }
+                finishTurn();
+            }, 600);
+
+        } else {
+            const potentialPosition = oldPosition + steps;
+            
+            if (SNAKES[potentialPosition] && potentialPosition <= BOARD_SIZE) {
+                player.position = potentialPosition;
+                updateGameBoard();
+                playSound('moveSound');
+                
+                setTimeout(() => {
+                    player.position = SNAKES[potentialPosition];
+                    playSound('snakeSound');
+                    finishTurn();
+                }, 600);
+            } else {
+                finishTurn();
+            }
+        }
+    }
+    
+    function nextPlayer() {
+        do {
+            gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+        } while (gameState.winners.some(p => p.name === gameState.players[gameState.currentPlayerIndex].name) && !isGameOver());
+        
+        updateCurrentPlayerDisplay();
+    }
+    
+    function endGame() {
+        const list = document.getElementById('winnersList');
+        const remainingPlayers = gameState.players
+            .filter(p => !gameState.winners.some(w => w.name === p.name))
+            .sort((a, b) => b.position - a.position);
+        const finalRanking = [...gameState.winners, ...remainingPlayers];
+
+        list.innerHTML = finalRanking.map((p, i) => {
+            const rankText = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
+            return `<div class="winner-item"><span>${rankText} ${p.name}</span></div>`;
+        }).join('');
+        
+        document.getElementById('winnersSection').style.display = 'block';
+        document.getElementById('rollButton').disabled = true;
+        document.getElementById('skipTurnButton').disabled = true;
+        document.getElementById('currentPlayerDisplay').textContent = "Game Over!";
+        updateHeaderButtons();
+        saveStateToHistory(); 
+    }
+    
+    function forceEndGame() {
+        if (!gameState.gameStarted || isGameOver()) return;
+        if (confirm('Are you sure you want to end the game and declare winners now?')) {
+            endGame();
+        }
+    }
+    
+    function resetGame() {
+        if (gameState.gameStarted && !isGameOver()) {
+            if (!confirm('Are you sure you want to end the current game and start a new one?')) {
+                return;
+            }
+        }
+        
+        initializeGameState();
+        
+        const headerImg = document.getElementById('gameLogoImg');
+        headerImg.src = '';
+        headerImg.style.display = 'none';
+        headerImg.parentElement.querySelector('span').style.display = 'inline';
+        const boardImg = document.getElementById('boardLogoImg');
+        boardImg.src = '';
+        boardImg.style.display = 'none';
+        document.getElementById('logoUpload').value = "";
+        document.getElementById('logoLabel').innerHTML = `📁 Click to upload Logo`;
+        document.getElementById('logoLabel').style.background = '#ecf0f1';
+        
+        document.getElementById('gameSection').classList.remove('active');
+        document.getElementById('setupSection').classList.add('active');
+        document.getElementById('winnersSection').style.display = 'none';
+        document.getElementById('dice').textContent = '🎲';
+        document.getElementById('rollButton').disabled = false;
+        document.getElementById('skipTurnButton').disabled = false;
+        document.getElementById('svgLayer').innerHTML = '';
+        
+        const csvLabel = document.getElementById('csvLabel');
+        csvLabel.innerHTML = `📁 Click to upload CSV<br><small>Format: q,o1,o2,o3,o4,ans,lvl,group</small>`;
+        csvLabel.style.background = '#ecf0f1';
+        csvLabel.style.borderColor = '#bdc3c7';
+        document.getElementById('csvUpload').value = "";
+
+        document.querySelectorAll('.sound-upload-label').forEach(label => {
+            label.textContent = 'Select file...';
+            label.style.backgroundColor = '#ecf0f1';
+        });
+        document.querySelectorAll('.sound-effects audio').forEach(audio => { audio.src = ''; });
+
+        history = [];
+        historyIndex = -1;
+        updateHistoryButtons();
+        updateHeaderButtons();
+        createBoard();
+    }
+    
+    function playSound(soundId) {
+        if (gameState.soundEnabled) {
+            const audio = document.getElementById(soundId);
+            if (audio && audio.src) {
+                audio.volume = gameState.volume;
+                audio.currentTime = 0;
+                audio.play().catch(e => {});
+            }
+        }
+    }
+    
+    function updateSoundVolume() {
+        document.querySelectorAll('audio').forEach(audio => audio.volume = gameState.volume);
+    }
+    
+    function toggleFullscreen() {
+        const el = document.getElementById('gameContainer');
+        if (!document.fullscreenElement) el.requestFullscreen().catch(err => console.error(err));
+        else document.exitFullscreen();
+    }
+    
+    document.addEventListener('fullscreenchange', () => {
+        const btn = document.getElementById('headerFullscreenBtn');
+        btn.textContent = document.fullscreenElement ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+    });
+
 </script>
+
+</body>

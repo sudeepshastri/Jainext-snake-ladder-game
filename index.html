@@ -1,3 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jainext Snake & Ladder Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&family=Roboto:wght@400;600;700&display=swap');
+
+        :root {
+            --snake-color: #2ecc71;
+            --ladder-color: #27ae60;
+            --button-disabled-bg: #95a5a6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Roboto', 'Noto Sans Devanagari', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .fullscreen-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 0px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            z-index: 100;
+        }
+        
+        .game-title { display: flex; align-items: center; gap: 15px; }
+        .logo-container { width: 160px; height: 160px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2em; cursor: default; transition: all 0.3s ease; overflow: hidden; }
+        .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
+        .title-text { color: white; font-size: 2.2em; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        
+        .controls { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: flex-end;}
+        .volume-control { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 25px; }
+        .volume-slider { width: 80px; }
+        
+        .header-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1em; transition: all 0.3s ease; }
+        .header-btn:hover:not(:disabled) { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .header-btn:disabled { background: var(--button-disabled-bg); cursor: not-allowed; opacity: 0.6; transform: none !important; }
+        
+        .main-container { flex: 1; display: flex; padding: 20px; gap: 20px; overflow: hidden; }
+        .game-board-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        
+        .board-logo-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 10px;
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .board-logo-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
+        .game-board {
+            width: min(70vh, 80vw);
+            height: min(70vh, 80vw);
+            background: linear-gradient(45deg, #f0f8ff, #e6f3ff);
+            border: 8px solid #2c3e50;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .cell { background: linear-gradient(135deg, #ffffff, #f8f9fa); border: 2px solid #34495e; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: clamp(0.8em, 2vw, 1.2em); color: #2c3e50; position: relative; transition: all 0.3s ease; }
+        .cell .emoji { font-size: 1.8em; position: absolute; z-index: 2; }
+        .cell-number { position: absolute; top: 2px; left: 4px; font-size: 0.7em; color: #7f8c8d; }
+        
+        .snake-start { background: #d9f7e6; }
+        .ladder-start { background: #d4edda; }
+
+        .player { position: absolute; width: 25px; height: 25px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); font-size: 0.8em; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); transition: all 0.5s ease; z-index: 10; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        
+        .player-1 { background: #e74c3c; } .player-2 { background: #3498db; } .player-3 { background: #2ecc71; } .player-4 { background: #f1c40f; } .player-5 { background: #9b59b6; } .player-6 { background: #1abc9c; }
+        
+        .side-panel { width: 350px; background: rgba(255,255,255,0.95); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .setup-section, .game-section { display: none; }
+        .setup-section.active, .game-section.active { display: block; }
+        .section-title { font-size: 1.5em; font-weight: 700; color: #2c3e50; text-align: center; margin-bottom: 15px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #34495e; }
+        .input-group input, .input-group select { width: 100%; padding: 12px; border: 2px solid #bdc3c7; border-radius: 8px; font-size: 1em; transition: all 0.3s ease; }
+        .input-group input:focus, .input-group select:focus { outline: none; border-color: #3498db; box-shadow: 0 0 10px rgba(52, 152, 219, 0.3); }
+        .file-upload { position: relative; display: inline-block; width: 100%; }
+        .file-upload input[type=file] { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        .file-upload-label { display: block; padding: 12px; background: #ecf0f1; border: 2px dashed #bdc3c7; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+        .file-upload-label:hover { background: #d5dbdb; border-color: #95a5a6; }
+        
+        .sound-upload-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .sound-upload-group label { font-weight: normal; flex-basis: 40%; }
+        .sound-upload-label { padding: 5px 10px; background: #ecf0f1; border: 1px solid #bdc3c7; border-radius: 5px; cursor: pointer; text-align: center; flex-basis: 55%; font-size: 0.9em; }
+        .sound-upload-label:hover { background: #e0e0e0; }
+
+        .btn { padding: 12px 25px; border: none; border-radius: 25px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
+        .btn:disabled { background: var(--button-disabled-bg); box-shadow: none !important; transform: none !important; cursor: not-allowed; opacity: 0.6; }
+        
+        .btn-primary { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
+        .btn-primary:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4); }
+        .btn-secondary { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: white; }
+        .btn-secondary:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(127, 140, 141, 0.4); }
+        .btn-success { background: linear-gradient(135deg, var(--ladder-color), #229954); color: white; }
+        .btn-success:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4); }
+        
+        .dice-container { text-align: center; margin-bottom: 20px; }
+        .dice { width: 80px; height: 80px; background: white; border: 3px solid #2c3e50; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; font-size: 2.5em; font-weight: bold; color: #2c3e50; cursor: pointer; transition: all 0.3s ease; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .dice:hover { transform: scale(1.1) rotate(5deg); }
+        
+        .current-player { text-align: center; padding: 15px; background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border-radius: 15px; font-size: 1.2em; font-weight: 600; margin-bottom: 15px; transition: background 0.5s ease; }
+        
+        .players-list { background: #ecf0f1; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        .player-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #bdc3c7; }
+        .player-item:last-child { border-bottom: none; }
+        
+        .question-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s 0.3s;
+            pointer-events: none;
+        }
+        .question-popup.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+            pointer-events: all;
+        }
+        
+        .question-card { background: white; border-radius: 20px; padding: 60px; max-width: 850px; width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.3); transform: scale(0.8); transition: transform 0.3s ease; }
+        .question-popup.active .question-card { transform: scale(1); }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .timer { background: #e74c3c; color: white; padding: 10px 15px; border-radius: 25px; font-weight: bold; font-size: 1.2em; }
+        .timer.warning { background: #f39c12; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0.5; } }
+        .question-text { font-size: 2.4em; font-weight: 800; margin-bottom: 30px; text-align: center; color: #2c3e50; line-height: 1.4; }
+        .options-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .option { padding: 25px; border: 2px solid #bdc3c7; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; text-align: center; font-weight: 800; font-size: 2.1em; }
+        .option:hover { border-color: #3498db; background: #ecf0f1; transform: translateY(-2px); }
+        .option.selected { background: #3498db; color: white; border-color: #2980b9; }
+        .option.correct { background: var(--ladder-color); color: white; border-color: #229954; }
+        .option.wrong { background: #e74c3c; color: white; border-color: #c0392b; }
+        .winners-section { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: 20px; border-radius: 15px; text-align: center; }
+        .winner-item { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.3); font-size: 1.1em; }
+        .winner-item:last-child { border-bottom: none; }
+        
+        .svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        
+        .snake-outline, .snake-body {
+            stroke-linecap: round;
+            fill: none;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
+        }
+        .snake-outline {
+            stroke: #2c3e50;
+            stroke-width: 10px;
+        }
+        .snake-body {
+            stroke: var(--snake-color);
+            stroke-width: 6px;
+        }
+
+        .ladder-side { stroke: #8B4513; stroke-width: 8px; stroke-linecap: round; opacity: 0.9; }
+        .ladder-rung { stroke: #AF601A; stroke-width: 6px; stroke-linecap: round; opacity: 0.9; }
+        
+        .developer-credit { text-align: center; font-size: 0.8em; color: #7f8c8d; }
+        .side-panel-footer { margin-top: auto; padding-top: 15px; }
+        .history-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
+        .history-controls .btn { padding: 10px 15px; flex-grow: 1; }
+
+        .dice-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s 0.3s;
+            pointer-events: none;
+        }
+        .dice-popup.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+            pointer-events: all;
+        }
+        .dice-popup-content {
+            width: 550px;
+            height: 550px;
+            background: white;
+            border: 5px solid #2c3e50;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25em;
+            font-weight: bold;
+            color: #2c3e50;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        .dice-popup.active .dice-popup-content {
+            transform: scale(1);
+        }
+        .dice-popup-content.rolling {
+            animation: roll 0.5s infinite linear;
+        }
+        @keyframes roll { from { transform: rotate(0deg) scale(1.1); } to { transform: rotate(360deg) scale(1.1); } }
+
+        .guideline-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            padding-top: 80px;
+            max-width: 90vw;
+            width: 1000px;
+            height: 90vh;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .question-popup.active .guideline-card {
+             transform: scale(1);
+        }
+
+        .guideline-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            background: var(--ladder-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        .guideline-close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        #guidelineFrame {
+            flex-grow: 1;
+            border-radius: 10px;
+        }
+
+        #groupOptionsContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            max-height: 40vh;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .group-option {
+            padding: 20px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2em;
+            text-transform: capitalize;
+        }
+        .group-option:hover {
+            border-color: #3498db;
+            background: #ecf0f1;
+            transform: translateY(-2px);
+        }
+        .group-option.selected {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        @media (max-width: 1200px) {
+            .board-logo-container { display: none; }
+        }
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; padding: 10px; }
+            .side-panel { width: 100%; height: auto; max-height: 45vh; order: 1; }
+            .game-board-container { order: 2; }
+            .header { order: 0; padding: 10px 15px; }
+            .title-text { font-size: 1.5em; }
+        }
+    </style>
+</head>
 <body>
     <div class="fullscreen-container" id="gameContainer">
         <div class="header">
@@ -492,9 +844,8 @@
             const nextChar = row[i + 1];
             
             if (char === '"' && inQuotes && nextChar === '"') {
-                // Handle escaped double quote ""
                 currentPart += '"';
-                i++; // Skip next quote
+                i++;
             } else if (char === '"') {
                 inQuotes = !inQuotes;
             } else if (char === ',' && !inQuotes) {
@@ -571,17 +922,14 @@
     async function loadDefaultAssets() {
         if (!gameState.logoUploaded) {
             try {
-                // Check if the asset exists before trying to load it
                 const response = await fetch(DEFAULT_ASSETS.logo, { method: 'HEAD' });
                 if (response.ok) {
                     const imgSrc = DEFAULT_ASSETS.logo;
-                    const headerImg = document.getElementById('gameLogoImg');
-                    headerImg.src = imgSrc;
-                    headerImg.style.display = 'block';
-                    headerImg.parentElement.querySelector('span').style.display = 'none';
-                    const boardImg = document.getElementById('boardLogoImg');
-                    boardImg.src = imgSrc;
-                    boardImg.style.display = 'block';
+                    document.getElementById('gameLogoImg').src = imgSrc;
+                    document.getElementById('gameLogoImg').style.display = 'block';
+                    document.getElementById('gameLogoImg').parentElement.querySelector('span').style.display = 'none';
+                    document.getElementById('boardLogoImg').src = imgSrc;
+                    document.getElementById('boardLogoImg').style.display = 'block';
                     document.getElementById('logoLabel').textContent = `✅ Default logo loaded!`;
                 }
             } catch (e) { console.warn("Default logo not found. Skipping."); }
@@ -614,8 +962,13 @@
         }
     }
 
-    // --- MODIFICATION: New game flow functions ---
+    // --- MODIFICATION: New streamlined game flow functions ---
     async function beginGameSetup() {
+        if(gameState.gameStarted) {
+            if(!confirm("A game is already in progress. Are you sure you want to start a new one?")) {
+                return;
+            }
+        }
         initializeGameState();
         
         await loadDefaultAssets();
@@ -640,7 +993,7 @@
     function showGuidelines() {
         const popup = document.getElementById('guidelinePopup');
         const frame = document.getElementById('guidelineFrame');
-        if (frame.src === "") {
+        if (frame.src === "" || !frame.src) {
              frame.src = 'assets/Game-Guidelines.pdf'; 
         }
         popup.classList.add('active');
@@ -679,9 +1032,8 @@
         
         document.getElementById('groupSelectionPopup').classList.remove('active');
         
-        // This is the initial setup. All questions for the group go into `availableQuestions`.
         gameState.availableQuestions = gameState.masterQuestions.filter(q => q.group === gameState.selectedQuestionGroup);
-        gameState.usedQuestions = []; // Ensure the used pool is empty
+        gameState.usedQuestions = [];
 
         if (gameState.availableQuestions.length === 0) {
             alert(`Error: No questions found for the selected group "${gameState.selectedQuestionGroup}". Please check your CSV file.`);
@@ -792,40 +1144,31 @@
         }, 100);
     }
     
-    // --- MODIFICATION: Corrected question selection and repetition logic ---
+    // --- MODIFICATION: Rewritten for guaranteed non-repetition ---
     function showQuestion(diceRoll) {
-        // Step 1: Check if any questions are left at all.
         if (gameState.availableQuestions.length === 0) {
-            // If the available pool is empty, check if we have used questions to refill from.
             if (gameState.usedQuestions.length > 0) {
                 console.log("All questions used. Reshuffling the deck.");
                 gameState.availableQuestions = [...gameState.usedQuestions];
                 gameState.usedQuestions = [];
             } else {
-                // This is a fatal error: no questions were ever loaded, or they've all vanished.
                 alert(`FATAL ERROR: No more questions available for group "${gameState.selectedQuestionGroup}". Game cannot continue.`);
                 forceEndGame();
                 return;
             }
         }
         
-        // Step 2: Try to find a question of the appropriate difficulty level from the available pool.
         const level = diceRoll <= 2 ? 'easy' : (diceRoll <= 4 ? 'medium' : 'hard');
         let pool = gameState.availableQuestions.filter(q => q.level === level);
 
-        // Step 3: If no questions of that difficulty are left, use any remaining available question.
-        // This prevents the game from stopping if you run out of, say, 'hard' questions
-        // but still have 'easy' ones left.
         if (pool.length === 0) {
             console.warn(`No questions of level '${level}' available. Picking from any remaining level.`);
             pool = gameState.availableQuestions;
         }
 
-        // Step 4: Select a random question from the determined pool.
         const questionIndexInPool = Math.floor(Math.random() * pool.length);
         const question = pool[questionIndexInPool];
         
-        // The rest of the function remains the same.
         gameState.currentQuestion = question;
         gameState.selectedOption = -1;
         
@@ -882,7 +1225,6 @@
         const isCorrect = gameState.selectedOption === gameState.currentQuestion.answer;
         const diceRoll = parseInt(document.getElementById('questionPopup').dataset.diceRoll, 10);
         
-        // This logic correctly moves the question from `available` to `used`, preventing immediate repeats.
         const questionIndex = gameState.availableQuestions.findIndex(q => q.question === gameState.currentQuestion.question);
         if (questionIndex > -1) {
             const [usedQuestion] = gameState.availableQuestions.splice(questionIndex, 1);
@@ -1078,3 +1420,4 @@
 </script>
 
 </body>
+</html>

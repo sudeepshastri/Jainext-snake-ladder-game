@@ -157,6 +157,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -305,6 +306,39 @@
             border-radius: 10px;
         }
 
+        /* <!-- NEW/MODIFIED: Styles for the Group Selection Popup --> */
+        #groupOptionsContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            max-height: 40vh;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .group-option {
+            padding: 20px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2em;
+            text-transform: capitalize;
+        }
+        .group-option:hover {
+            border-color: #3498db;
+            background: #ecf0f1;
+            transform: translateY(-2px);
+        }
+        .group-option.selected {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
         @media (max-width: 1200px) {
             .board-logo-container { display: none; }
         }
@@ -357,7 +391,8 @@
                     <div id="playerNames"></div>
                     <div class="input-group"><label for="timerDuration">⏱️ Question Timer (seconds):</label><select id="timerDuration"><option value="5">5s</option><option value="10">10s</option><option value="15" selected>15s</option><option value="20">20s</option><option value="25">25s</option><option value="30">30s</option></select></div>
                     <div class="input-group"><label>🖼️ Upload Game Logo:</label><div class="file-upload"><input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)"><label for="logoUpload" class="file-upload-label" id="logoLabel">📁 Click to upload Logo</label></div></div>
-                    <div class="input-group"><label>📄 Upload Questions CSV:</label><div class="file-upload"><input type="file" id="csvUpload" accept=".csv" onchange="handleCsvUpload(event)"><label for="csvUpload" class="file-upload-label" id="csvLabel">📁 Click to upload CSV<br><small>Format: q,o1,o2,o3,o4,ans,lvl</small></label></div></div>
+                    <!-- NEW/MODIFIED: Updated CSV instructions -->
+                    <div class="input-group"><label>📄 Upload Questions CSV:</label><div class="file-upload"><input type="file" id="csvUpload" accept=".csv" onchange="handleCsvUpload(event)"><label for="csvUpload" class="file-upload-label" id="csvLabel">📁 Click to upload CSV<br><small>Format: q,o1,o2,o3,o4,ans,lvl,group</small></label></div></div>
                     
                     <div class="input-group">
                         <h3 style="font-size:1.1em; color:#2c3e50; margin-bottom:10px; text-align:center;">🔊 Upload Custom Sounds (Optional)</h3>
@@ -450,6 +485,17 @@
             </div>
         </div>
         
+        <!-- NEW/MODIFIED: HTML for the Group Selection Popup -->
+        <div class="question-popup" id="groupSelectionPopup">
+            <div class="question-card">
+                <h2 class="section-title">Select a Question Group</h2>
+                <div id="groupOptionsContainer">
+                    <!-- Group options will be dynamically inserted here -->
+                </div>
+                <button class="btn btn-success" onclick="finalizeGameStart()" id="finalizeStartBtn" style="width: 100%; margin-top: 20px;" disabled>Play with Selected Group</button>
+            </div>
+        </div>
+
         <div class="sound-effects" style="display: none;">
             <audio id="timerTickSound" src=""></audio>
             <audio id="diceRollSound" src=""></audio>
@@ -490,11 +536,12 @@
         const MAX_STUCK_TURNS = 4;
 
         const DEFAULT_QUESTIONS = [
-            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: 2, level: "easy" },
-            { question: "What is 8 x 7?", options: ["54", "56", "64", "68"], answer: 1, level: "medium" },
-            { question: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "Jane Austen", "William Shakespeare", "Mark Twain"], answer: 2, level: "hard" }
+            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: 2, level: "easy", group: "geography" },
+            { question: "What is 8 x 7?", options: ["54", "56", "64", "68"], answer: 1, level: "medium", group: "math" },
+            { question: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "Jane Austen", "William Shakespeare", "Mark Twain"], answer: 2, level: "hard", group: "literature" }
         ];
 
+        // NEW/MODIFIED: Updated game state initialization
         function initializeGameState() {
              gameState = {
                 players: [],
@@ -503,6 +550,8 @@
                 masterQuestions: [],
                 availableQuestions: [],
                 usedQuestions: [],
+                allQuestionGroups: [],      // To store all unique group names
+                selectedQuestionGroup: null, // To store the chosen group for the game
                 csvUploaded: false,
                 logoUploaded: false,
                 soundsUploaded: {},
@@ -519,7 +568,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeGameState();
-            gameState.masterQuestions = [...DEFAULT_QUESTIONS];
+            parseCSV("question,option1,option2,option3,option4,answer,level,group\n" + DEFAULT_QUESTIONS.map(q => `"${q.question}","${q.options[0]}","${q.options[1]}","${q.options[2]}","${q.options[3]}",${q.answer + 1},${q.level},${q.group}`).join('\n'));
             setupNumberOfPlayers();
             createBoard();
             setupVolumeControl();
@@ -790,23 +839,29 @@
             }
         }
         
+        // NEW/MODIFIED: parseCSV now handles the 'group' column
         function parseCSV(csv) {
             try {
                 const lines = csv.split('\n').filter(line => line.trim() !== '');
                 const questions = [];
-                for (let i = 0; i < lines.length; i++) {
+                const groupSet = new Set();
+                for (let i = 1; i < lines.length; i++) { // Start from 1 to skip header
                     const parts = lines[i].split(',').map(part => part.trim().replace(/"/g, ''));
                     if (parts.length >= 7) {
+                        const group = (parts[7] || 'general').trim().toLowerCase();
                         questions.push({
                             question: parts[0],
                             options: [parts[1], parts[2], parts[3], parts[4]],
                             answer: parseInt(parts[5]) - 1,
-                            level: parts[6].toLowerCase()
+                            level: parts[6].toLowerCase(),
+                            group: group
                         });
+                        groupSet.add(group);
                     }
                 }
                 if (questions.length > 0) {
                     gameState.masterQuestions = questions;
+                    gameState.allQuestionGroups = Array.from(groupSet).sort();
                     gameState.csvUploaded = true;
                     const label = document.getElementById('csvLabel');
                     label.innerHTML = `✅ ${questions.length} questions loaded!`;
@@ -877,10 +932,11 @@
             }
         }
 
-        async function initializeAndRunGame() {
+        async function initializeAndPrepareGame() {
             await loadDefaultAssets();
             
             const masterQuestions = gameState.masterQuestions;
+            const allQuestionGroups = gameState.allQuestionGroups;
             const currentSetup = {
                 csvUploaded: gameState.csvUploaded,
                 logoUploaded: gameState.logoUploaded,
@@ -890,7 +946,7 @@
             initializeGameState();
             
             gameState.masterQuestions = masterQuestions;
-            gameState.availableQuestions = [...masterQuestions];
+            gameState.allQuestionGroups = allQuestionGroups;
             gameState.csvUploaded = currentSetup.csvUploaded;
             gameState.logoUploaded = currentSetup.logoUploaded;
             gameState.soundsUploaded = currentSetup.soundsUploaded;
@@ -903,8 +959,55 @@
                 color: `player-${i + 1}`
             }));
             gameState.timerDuration = parseInt(document.getElementById('timerDuration').value);
-            gameState.gameStarted = true;
             
+            // NEW/MODIFIED: Logic to show group selector or start game directly
+            if (gameState.allQuestionGroups.length > 1) {
+                populateAndShowGroupSelector();
+            } else {
+                gameState.selectedQuestionGroup = gameState.allQuestionGroups[0] || 'general';
+                finalizeGameStart();
+            }
+        }
+
+        // NEW/MODIFIED: New functions for group selection
+        function populateAndShowGroupSelector() {
+            const container = document.getElementById('groupOptionsContainer');
+            container.innerHTML = '';
+            gameState.allQuestionGroups.forEach(group => {
+                const btn = document.createElement('div');
+                btn.className = 'group-option';
+                btn.textContent = group;
+                btn.onclick = () => selectGroup(group, btn);
+                container.appendChild(btn);
+            });
+            document.getElementById('groupSelectionPopup').classList.add('active');
+        }
+
+        function selectGroup(groupName, element) {
+            gameState.selectedQuestionGroup = groupName;
+            document.querySelectorAll('.group-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('finalizeStartBtn').disabled = false;
+        }
+        
+        function finalizeGameStart() {
+            if (!gameState.selectedQuestionGroup) {
+                alert("Please select a question group to start.");
+                return;
+            }
+            
+            document.getElementById('groupSelectionPopup').classList.remove('active');
+            
+            // Filter questions based on the selected group
+            gameState.availableQuestions = gameState.masterQuestions.filter(q => q.group === gameState.selectedQuestionGroup);
+
+            if (gameState.availableQuestions.length === 0) {
+                alert(`Error: No questions found for the selected group "${gameState.selectedQuestionGroup}". Please check your CSV file.`);
+                resetGame();
+                return;
+            }
+            
+            gameState.gameStarted = true;
             document.getElementById('setupSection').classList.remove('active');
             document.getElementById('gameSection').classList.add('active');
             
@@ -918,17 +1021,13 @@
         function startGame() {
             const popup = document.getElementById('guidelinePopup');
             const frame = document.getElementById('guidelineFrame');
-            
             frame.src = 'assets/Game-Guidelines.pdf'; 
-            
             popup.classList.add('active');
         }
 
         async function closeGuidelinesAndStart() {
-            const popup = document.getElementById('guidelinePopup');
-            popup.classList.remove('active');
-            
-            await initializeAndRunGame();
+            document.getElementById('guidelinePopup').classList.remove('active');
+            await initializeAndPrepareGame();
         }
         
         function updatePlayersDisplay() {
@@ -1028,11 +1127,13 @@
                 gameState.availableQuestions = [...gameState.usedQuestions];
                 gameState.usedQuestions = [];
             }
+            // Logic is simpler now as availableQuestions is already filtered by group
             const level = diceRoll <= 2 ? 'easy' : (diceRoll <= 4 ? 'medium' : 'hard');
             let pool = gameState.availableQuestions.filter(q => q.level === level);
-            if (pool.length === 0) pool = gameState.availableQuestions;
+            if (pool.length === 0) pool = gameState.availableQuestions; 
             if (pool.length === 0) {
-                alert('FATAL ERROR: No questions available.');
+                alert(`FATAL ERROR: No questions available for group "${gameState.selectedQuestionGroup}". Game cannot continue.`);
+                forceEndGame();
                 return;
             }
 
@@ -1219,9 +1320,10 @@
                     return;
                 }
             }
-
+            
+            // Re-initialize with default questions which also sets up groups
             initializeGameState();
-            gameState.masterQuestions = [...DEFAULT_QUESTIONS];
+            parseCSV("question,option1,option2,option3,option4,answer,level,group\n" + DEFAULT_QUESTIONS.map(q => `"${q.question}","${q.options[0]}","${q.options[1]}","${q.options[2]}","${q.options[3]}",${q.answer + 1},${q.level},${q.group}`).join('\n'));
             
             const headerImg = document.getElementById('gameLogoImg');
             headerImg.src = '';
@@ -1243,7 +1345,7 @@
             document.getElementById('svgLayer').innerHTML = '';
             
             const csvLabel = document.getElementById('csvLabel');
-            csvLabel.innerHTML = `📁 Click to upload CSV<br><small>Format: q,o1,o2,o3,o4,ans,lvl</small>`;
+            csvLabel.innerHTML = `📁 Click to upload CSV<br><small>Format: q,o1,o2,o3,o4,ans,lvl,group</small>`;
             csvLabel.style.background = '#ecf0f1';
             csvLabel.style.borderColor = '#bdc3c7';
             document.getElementById('csvUpload').value = "";
